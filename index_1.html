@@ -1,0 +1,2804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A week-by-week course planner for Caribbean higher education: active learning, constructive alignment, and face-to-face teaching quality.">
+<meta name="color-scheme" content="light">
+<title>ActiveCourse Studio</title>
+<style>
+:root{
+  --ink:#0E2A26; --leaf:#1C6B5B; --leaf-deep:#134A3F; --leaf-soft:#E5EFEA;
+  --chalk:#F1F4EF; --paper:#FFFFFF; --line:#D9E2DC; --muted:#63756F;
+  --ochre:#A96A12; --ochre-soft:#FBF1DF; --ochre-line:#E8D4AE;
+  --rust:#A2402C; --rust-soft:#F7E4E0; --rust-line:#E9C6BE;
+  --sea:#2C6E8F; --sea-soft:#E3EEF3;
+  --display:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --util:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--chalk);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+button{font:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+h1,h2,h3,h4,h5{font-weight:600}
+
+/* ---------- top bar ---------- */
+.topbar{background:var(--ink);color:#EAF2EE;padding:12px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:40}
+.brand{font-family:var(--display);font-size:20px;letter-spacing:.2px;white-space:nowrap}
+.brand span{color:#8FC3B3}
+.coursebox{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
+.coursebox input{background:transparent;border:0;border-bottom:1px dashed #3E635B;color:#fff;padding:3px 0;font-family:var(--display);font-size:17px;width:100%}
+.coursebox .sub{font-family:var(--util);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8FC3B3}
+.picker{background:#17403A;color:#fff;border:1px solid #3E635B;border-radius:10px;padding:8px 10px;max-width:230px;font-size:13.5px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--leaf);color:#fff;border:0;border-radius:10px;padding:9px 13px;font-weight:600;font-size:13.5px}
+.btn:hover{background:var(--leaf-deep)}
+.btn.ghost{background:transparent;border:1px solid #3E635B;color:#DCEAE4}
+.btn.ghost:hover{background:#173A34}
+.btn.small{padding:6px 10px;font-size:12.5px;border-radius:8px}
+.btn.quiet{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+.btn.quiet:hover{background:var(--leaf-soft)}
+.btn.warm{background:var(--ochre);color:#fff}
+.btn.warm:hover{background:#8C570D}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- shell ---------- */
+.shell{max-width:1280px;margin:0 auto;padding:20px;display:grid;grid-template-columns:272px 1fr;gap:20px;align-items:start}
+
+/* ---------- week rail ---------- */
+.rail{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px;position:sticky;top:70px}
+.rail h2,.stage h2{font-family:var(--util);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
+.weeklist{display:flex;flex-direction:column;max-height:52vh;overflow:auto;margin:0 -6px;padding:0 6px}
+.wk{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;background:transparent;border:0;border-left:2px solid var(--line);text-align:left;padding:9px 8px;border-radius:0 9px 9px 0;color:var(--ink);width:100%}
+.wk:hover{background:var(--chalk)}
+.wk.on{background:var(--leaf-soft);border-left:2px solid var(--leaf)}
+.wk .no{font-family:var(--util);font-size:11px;color:var(--muted)}
+.wk.on .no{color:var(--leaf-deep);font-weight:700}
+.wk .tp{font-size:13.5px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wk .ring{grid-column:1;width:26px;height:26px}
+.railfoot{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.stat{font-family:var(--util);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.railbtns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------- stage ---------- */
+.stage{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card.personal{background:var(--ochre-soft);border-color:var(--ochre-line)}
+.card.quality{background:linear-gradient(180deg,#F7FAF8,#fff);border-color:var(--line)}
+.eyebrow{font-family:var(--util);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--leaf);font-weight:700}
+.card.personal .eyebrow{color:var(--ochre)}
+.hdrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.hint{font-size:12.5px;color:var(--muted);margin:2px 0 14px;max-width:66ch}
+.hint.tight{margin-bottom:6px}
+h1.topic{font-family:var(--display);font-size:27px;line-height:1.2;margin:6px 0 0}
+.topicinput{font-family:var(--display);font-size:26px;line-height:1.25;width:100%;border:0;border-bottom:1px solid var(--line);padding:4px 0;background:transparent}
+.topicinput:focus{border-bottom-color:var(--leaf)}
+
+.field{margin:14px 0 0}
+.field.tight{margin-top:9px}
+.field label{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--util);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
+input.t,textarea.t,select.t{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+textarea.t{min-height:84px;resize:vertical;line-height:1.55}
+textarea.t.short{min-height:60px}
+.card.personal input.t,.card.personal textarea.t{border-color:var(--ochre-line);background:#fffdf8}
+input.t:focus,textarea.t:focus,select.t:focus{border-color:var(--leaf)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+.tag{font-family:var(--util);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:999px;font-weight:700;white-space:nowrap}
+.tag.src{background:var(--leaf-soft);color:var(--leaf-deep)}
+.tag.edit{background:var(--ochre-soft);color:var(--ochre);border:1px solid var(--ochre-line)}
+.tag.you{background:#EFEFEA;color:var(--muted)}
+.tag.sea{background:var(--sea-soft);color:var(--sea)}
+.tag.bad{background:var(--rust-soft);color:var(--rust)}
+.linkbtn{background:none;border:0;color:var(--leaf);font-size:11.5px;text-decoration:underline;padding:0}
+.linkbtn:hover{color:var(--leaf-deep)}
+
+/* ---------- time ribbon ---------- */
+.ribbon{display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--line);margin:4px 0 6px}
+.seg{display:flex;align-items:center;justify-content:center;font-family:var(--util);font-size:10px;color:#fff;min-width:0;overflow:hidden;white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--util);font-size:10px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+
+.act{border:1px solid var(--line);border-left:4px solid var(--leaf);border-radius:11px;padding:11px;margin:10px 0;background:var(--paper)}
+.act .row1{display:grid;grid-template-columns:72px 1fr 118px 128px auto;gap:8px;align-items:center}
+.act .row2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:8px}
+.act .mv{display:flex;gap:4px}
+.iconbtn{background:var(--chalk);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;line-height:1;color:var(--muted)}
+.iconbtn:hover{background:var(--leaf-soft);color:var(--leaf-deep)}
+.iconbtn.del:hover{background:var(--rust-soft);color:var(--rust);border-color:var(--rust-line)}
+.mini{font-family:var(--util);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.techbox{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* ---------- quality panel ---------- */
+.qhead{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.qscore{text-align:center;min-width:96px}
+.bignum{font-family:var(--display);font-size:38px;line-height:1}
+.qbars{display:flex;flex-direction:column;gap:9px;min-width:0}
+.qbar{display:grid;grid-template-columns:112px 1fr 64px;gap:10px;align-items:center;font-size:12.5px}
+.meter{height:9px;background:var(--line);border-radius:99px;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px}
+.checks{margin-top:14px;border-top:1px solid var(--line)}
+.check{display:grid;grid-template-columns:18px 1fr;gap:9px;padding:9px 0;border-bottom:1px dashed var(--line);align-items:start}
+.check:last-child{border-bottom:0}
+.check .ic{font-weight:700;line-height:1.35}
+.check.ok .ic{color:var(--leaf)}
+.check.warn .ic{color:var(--ochre)}
+.check.bad .ic{color:var(--rust)}
+.check .ttl{font-weight:600;font-size:13.5px}
+.check .dt{font-size:12.5px;color:var(--muted)}
+.check.ok{opacity:.72}
+.blooms{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.bl{font-family:var(--util);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:999px;background:var(--sea-soft);color:var(--sea);font-weight:700}
+.bl.none{background:var(--rust-soft);color:var(--rust)}
+
+/* ---------- chips / library ---------- */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--ink)}
+.chip:hover{background:var(--leaf-soft)}
+.chip.on{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+.movegrid{max-height:44vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--chalk)}
+.move{border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin:9px 0;background:var(--paper)}
+.move .mh{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.move h5{margin:0;font-size:14.5px}
+.move .md{font-size:12.5px;color:var(--muted);margin:5px 0 0}
+.move .mt{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;align-items:center}
+
+/* ---------- dashboard ---------- */
+.dashgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:12px}
+.panel{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper)}
+.panel h5{margin:0 0 3px;font-size:13.5px}
+.panel .sublabel{font-size:12px;color:var(--muted);margin:0 0 9px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:96px;border-bottom:1px solid var(--line);padding-bottom:1px}
+.bars{justify-content:flex-start}
+.bars .col{flex:1;max-width:48px;display:flex;flex-direction:column;justify-content:flex-end;min-width:4px;gap:1px}
+.bars .b{border-radius:2px 2px 0 0;min-height:1px}
+.xlabels{display:flex;gap:3px;margin-top:4px}
+.xlabels span{max-width:48px}
+.xlabels span{flex:1;text-align:center;font-family:var(--util);font-size:8.5px;color:var(--muted);overflow:hidden}
+.hbar{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;font-size:12px;margin:5px 0}
+.hbar .track{height:12px;background:var(--line);border-radius:4px;overflow:hidden}
+.hbar .track i{display:block;height:100%;background:var(--sea);border-radius:4px}
+.hbar .n{font-family:var(--util);font-size:11px;color:var(--muted);text-align:right}
+
+/* ---------- modal ---------- */
+.scrim{position:fixed;inset:0;background:#0E2A26CC;display:none;align-items:flex-start;justify-content:center;padding:28px 16px;z-index:60;overflow:auto}
+.scrim.open{display:flex}
+.modal{background:var(--paper);border-radius:18px;max-width:780px;width:100%;padding:22px}
+.modal.wide{max-width:1020px}
+.modal h3{font-family:var(--display);font-size:23px;margin:2px 0 4px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;background:var(--chalk);margin:14px 0 10px}
+.drop.hot{border-color:var(--leaf);background:var(--leaf-soft)}
+.preview{border:1px solid var(--line);border-radius:12px;max-height:230px;overflow:auto;margin-top:12px}
+.prow{display:grid;grid-template-columns:52px 1fr 130px;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.prow:last-child{border-bottom:0}
+.prow .n{font-family:var(--util);font-size:11px;color:var(--muted)}
+.prow .meta{font-family:var(--util);font-size:10px;color:var(--muted);text-align:right}
+.modalfoot{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.status{font-size:13px;color:var(--muted);min-height:20px;margin-top:8px}
+.status.bad{color:var(--rust)}
+.bar{height:5px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:9px;display:none}
+.bar.on{display:block}
+.bar i{display:block;height:100%;background:var(--leaf);width:0;transition:width .25s}
+.choice{display:flex;gap:9px;align-items:center;font-size:13.5px;margin:9px 0}
+.note{background:var(--sea-soft);border-left:3px solid var(--sea);padding:9px 12px;border-radius:0 8px 8px 0;font-size:12.5px;color:#274F63;margin:10px 0}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.saved{font-family:var(--util);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8FC3B3;white-space:nowrap}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media(max-width:980px){
+  .shell{grid-template-columns:1fr;padding:14px}
+  .rail{position:static}
+  .weeklist{max-height:none;flex-direction:row;overflow-x:auto}
+  .wk{min-width:190px;border-left:0;border-top:2px solid var(--line);border-radius:0 0 9px 9px}
+  .wk.on{border-left:0;border-top:2px solid var(--leaf)}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .act .row1{grid-template-columns:1fr 1fr}
+  .act .row2{grid-template-columns:1fr}
+  .qhead{grid-template-columns:1fr}
+  .qbar{grid-template-columns:96px 1fr 54px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  .topbar,.rail,.noprint,.scrim{display:none!important}
+  body{background:#fff}
+  .shell{display:block;max-width:none;padding:0}
+  .card{border:0;border-bottom:1px solid #ccc;border-radius:0;padding:12px 0;break-inside:avoid}
+  textarea.t,input.t{border:0;padding:0;resize:none;height:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar noprint">
+<div class="brand">ActiveCourse <span>Studio</span></div>
+<div class="coursebox">
+<input id="courseTitle" placeholder="Course title" aria-label="Course title">
+<div class="sub"><span id="courseMeta">Add a course code, term and institution in Settings</span></div>
+</div>
+<select class="picker" id="coursePicker" aria-label="Switch course"></select>
+<div class="saved" id="savedFlag">Saved</div>
+<div class="tools">
+<button class="btn ghost" id="btnCourses">Courses</button>
+<button class="btn" id="btnImport">Import outline</button>
+<button class="btn ghost" id="btnDash">Course view</button>
+<button class="btn ghost" id="btnCoach">Ask the coach</button>
+<button class="btn ghost" id="btnExport">Export</button>
+<button class="btn ghost" id="btnSettings">Settings</button>
+</div>
+</header>
+
+<div class="shell">
+<aside class="rail noprint">
+<h2>Course weeks</h2>
+<div class="weeklist" id="weekList"></div>
+<div class="railfoot">
+<button class="btn quiet small" id="btnAddWeek">+ Add a week</button>
+<div class="stat" id="railStat">&mdash;</div>
+<div class="stat" id="railQuality">&mdash;</div>
+<div class="railbtns">
+<button class="linkbtn" id="btnPrintWeek">Print this week</button>
+<button class="linkbtn" id="btnPrintAll">Print whole course</button>
+</div>
+</div>
+</aside>
+
+<main class="stage">
+<section class="card">
+<div class="hdrow">
+<div class="eyebrow" id="weekEyebrow">Week 01</div>
+<div class="noprint" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+<span id="frameBadges" style="display:flex;gap:6px;align-items:center"></span>
+<button class="btn warm small" id="btnPlanWeek">Draft this week with AI</button>
+<button class="btn quiet small" id="btnWeekDownload">Download this week</button>
+</div>
+</div>
+<input class="topicinput" id="topic" placeholder="What is this week about?" aria-label="Week topic">
+<div class="field">
+<label for="question">Essential question <span class="tag you">drives the session</span></label>
+<input class="t" id="question" placeholder="The one question students should be able to argue by the end of the session">
+</div>
+<div class="grid2">
+<div class="field">
+<label for="objectives">Learning objectives <span id="badgeObj"></span></label>
+<textarea class="t" id="objectives" placeholder="One per line. Start each with an action verb: analyse, apply, evaluate, design&hellip;"></textarea>
+<div class="blooms" id="bloomStrip"></div>
+</div>
+<div class="field">
+<label for="readings">Readings and resources <span id="badgeRead"></span></label>
+<textarea class="t" id="readings" placeholder="One per line"></textarea>
+</div>
+</div>
+<div class="grid2">
+<div class="field">
+<label for="assessment">Assessment due or in progress <span id="badgeAss"></span></label>
+<textarea class="t" id="assessment" placeholder="One per line"></textarea>
+</div>
+<div class="field">
+<label for="concepts">Threshold concepts students trip on</label>
+<textarea class="t" id="concepts" placeholder="What usually goes wrong here, and the check you will run for it"></textarea>
+</div>
+</div>
+</section>
+
+<section class="card quality noprint">
+<div class="hdrow">
+<div>
+<div class="eyebrow">Teaching quality check</div>
+<div class="hint tight">Runs on your own machine, instantly, with no AI and no internet. It reads this week against constructive alignment and active-learning evidence, and tells you the specific thing to change.</div>
+</div>
+<button class="btn quiet small" id="btnQualityHelp">What is checked?</button>
+</div>
+<div class="qhead">
+<div class="qscore">
+<div class="bignum" id="qScore">&mdash;</div>
+<div class="mini" id="qVerdict">not planned</div>
+</div>
+<div class="qbars" id="qBars"></div>
+</div>
+<div class="checks" id="qChecks"></div>
+</section>
+
+<section class="card">
+<div class="hdrow">
+<div>
+<div class="eyebrow">The class itself</div>
+<div class="hint tight">Minutes are drawn to scale. If the pale band is wider than the rest, students are listening more than working.</div>
+</div>
+<div class="stat" id="minuteCount">0 min</div>
+</div>
+<div class="ribbon" id="ribbon"></div>
+<div class="legend" id="legend"></div>
+<div id="activities"></div>
+<div class="railbtns noprint" style="margin-top:4px">
+<button class="btn quiet small" id="btnAddAct">+ Add a move</button>
+<button class="btn quiet small" id="btnLibrary">Insert from the move library</button>
+<button class="btn quiet small" id="btnBalance">Rebalance to the class length</button>
+</div>
+<div class="field">
+<label for="exit">Exit ticket <span class="tag sea">evidence you leave with</span></label>
+<textarea class="t short" id="exit" placeholder="The evidence you leave the room with"></textarea>
+</div>
+</section>
+
+<section class="card">
+<div class="eyebrow">Room, group and fallback</div>
+<div class="hint">Face-to-face teaching lives or dies on these details. They also feed the AI drafts, so a plan written for eighty students in fixed tiered seating does not come back assuming twenty around a table.</div>
+<div class="grid3">
+<div class="field">
+<label for="wSeats">Students expected this week</label>
+<input class="t" id="wSeats" type="number" min="0" max="2000" placeholder="Leave blank to use the course default">
+</div>
+<div class="field">
+<label for="wRoom">Room for this session</label>
+<select class="t" id="wRoom">
+<option value="">Use the course default</option>
+<option value="flat">Flat room, movable chairs</option>
+<option value="tiered">Tiered lecture theatre, fixed seats</option>
+<option value="seminar">Seminar room, one table</option>
+<option value="lab">Laboratory or studio</option>
+<option value="field">Off campus or field site</option>
+</select>
+</div>
+<div class="field">
+<label for="wGroups">How groups are formed</label>
+<input class="t" id="wGroups" placeholder="Fours by row, counted off, kept from last week&hellip;">
+</div>
+</div>
+<div class="field">
+<label for="wFallback">If the power, projector or internet fails</label>
+<textarea class="t short" id="wFallback" placeholder="The version of this class you can teach with a board and paper only"></textarea>
+</div>
+</section>
+
+<section class="card personal">
+<div class="eyebrow">Your layer</div>
+<div class="hint">Nothing here comes from the outline and nothing here gets overwritten when you re-import or redraft. This is where the course becomes yours, and where the Caribbean gets into it.</div>
+<div class="grid2">
+<div class="field">
+<label for="pHook">Opening hook, story, or provocation</label>
+<textarea class="t" id="pHook" placeholder="The clip, the headline, the argument you walk in with"></textarea>
+</div>
+<div class="field">
+<label for="pLocal">Local and lived examples <span class="tag sea">regional</span></label>
+<textarea class="t" id="pLocal" placeholder="Cases, data, policy and voices your students already recognise"></textarea>
+</div>
+</div>
+<div class="grid2">
+<div class="field">
+<label for="pAdapt">Adjustments for this group</label>
+<textarea class="t" id="pAdapt" placeholder="Access needs, language and literacy support, pace, group composition, students who work or commute"></textarea>
+</div>
+<div class="field">
+<label for="pMaterials">Materials to prepare</label>
+<textarea class="t" id="pMaterials" placeholder="Handouts and how many, slides, board plan, room setup, anything to test beforehand"></textarea>
+</div>
+</div>
+<div class="field">
+<label for="pNotes">Anything else</label>
+<textarea class="t" id="pNotes" placeholder="Free space"></textarea>
+</div>
+</section>
+
+<section class="card">
+<div class="eyebrow">After class</div>
+<div class="hint">Fill this in the same day if you can. Next year's version of this week is built from what you write here, and a reviewer reading your file will look for exactly this.</div>
+<div class="field">
+<label for="aNotes">What actually happened</label>
+<textarea class="t" id="aNotes" placeholder="Attendance, timing, what got cut, questions you did not expect"></textarea>
+</div>
+<div class="grid3">
+<div class="field">
+<label for="aEvidence">Evidence of learning collected</label>
+<textarea class="t short" id="aEvidence" placeholder="Exit tickets, quiz scores, group outputs, what they showed you"></textarea>
+</div>
+<div class="field">
+<label for="aReflect">Reflection</label>
+<textarea class="t short" id="aReflect" placeholder="What worked, what to change, what to keep"></textarea>
+</div>
+<div class="field">
+<label for="aBridge">Bridge to next week</label>
+<textarea class="t short" id="aBridge" placeholder="The thread you pick back up"></textarea>
+</div>
+</div>
+</section>
+</main>
+</div>
+
+<!-- Import -->
+<div class="scrim" id="importScrim">
+<div class="modal">
+<div class="eyebrow">Step 1 of 2</div>
+<h3>Import a course outline</h3>
+<p class="hint">Drop in a .docx, .pdf, .txt, .md, or .csv outline, or paste the text. Weeks, objectives, readings, and assessments are pulled out and placed in the planner. Your layer, your room notes and your after-class notes are never touched.</p>
+<div class="drop" id="drop">
+<div><strong>Drop your outline here</strong></div>
+<div class="hint" style="margin:6px auto 10px">or</div>
+<button class="btn quiet small" id="btnPick">Choose a file</button>
+<input type="file" id="file" accept=".txt,.md,.csv,.docx,.pdf,.json" style="display:none">
+<div class="stat" id="fileName" style="margin-top:9px"></div>
+</div>
+<div class="field">
+<label for="pasteText">Or paste the outline</label>
+<textarea class="t" id="pasteText" style="min-height:130px" placeholder="Week 1: Foundations&#10;Objectives: ...&#10;Readings: ..."></textarea>
+</div>
+<label class="choice"><input type="checkbox" id="useAI" checked> Let Claude structure the text (falls back to pattern reading if it is not available)</label>
+<label class="choice"><input type="checkbox" id="keepExisting" checked> Keep my personal layer, room notes and after-class notes</label>
+<div class="bar" id="bar"><i></i></div>
+<div class="status" id="importStatus"></div>
+<div class="preview" id="preview" style="display:none"></div>
+<div class="modalfoot">
+<button class="btn quiet" data-close>Cancel</button>
+<button class="btn" id="btnRead">Read the outline</button>
+<button class="btn warm" id="btnApply" disabled>Build the weeks</button>
+</div>
+</div>
+</div>
+
+<!-- Move library -->
+<div class="scrim" id="libScrim">
+<div class="modal wide">
+<div class="eyebrow">Active learning</div>
+<h3>The move library</h3>
+<p class="hint">Named, tested face-to-face techniques. Every one lists the evidence of learning it produces, the largest class it survives, and whether it needs any technology at all. Filters default to what your room and class size can actually take.</p>
+<div class="chips" id="libFilters"></div>
+<div class="field tight">
+<label for="libSearch" class="sr">Search moves</label>
+<input class="t" id="libSearch" placeholder="Search by name, purpose, or what it produces">
+</div>
+<div class="movegrid" id="libList"></div>
+<div class="status" id="libStatus"></div>
+<div class="modalfoot">
+<button class="btn quiet" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- Course dashboard -->
+<div class="scrim" id="dashScrim">
+<div class="modal wide">
+<div class="eyebrow">Whole course</div>
+<h3 id="dashTitle">Course view</h3>
+<p class="hint">The shape of the term. Read across the weeks for the things a single week cannot show you: where the listening piles up, where assessments collide, and which levels of thinking the course never asks for.</p>
+<div id="dashBody"></div>
+<div class="modalfoot">
+<button class="btn quiet" id="btnDashPrint">Print this view</button>
+<button class="btn" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- Quality help -->
+<div class="scrim" id="qhelpScrim">
+<div class="modal">
+<div class="eyebrow">Method</div>
+<h3>What the quality check looks at</h3>
+<div id="qhelpBody"></div>
+<div class="modalfoot"><button class="btn" data-close>Close</button></div>
+</div>
+</div>
+
+<!-- Coach -->
+<div class="scrim" id="coachScrim">
+<div class="modal">
+<div class="eyebrow">Teaching coach</div>
+<h3 id="coachTitle">Ideas for this week</h3>
+<p class="hint">The coach reads this week only: topic, objectives, readings, the moves you have already planned, and your room and class size. It suggests options. You decide what goes in.</p>
+<div class="grid2">
+<div class="field">
+<label for="coachAsk">What do you want help with?</label>
+<select class="t" id="coachAsk">
+<option value="activities">Active-learning moves for this week</option>
+<option value="questions">Better essential question and discussion prompts</option>
+<option value="exit">Exit ticket and quick checks for understanding</option>
+<option value="misconceptions">Likely misconceptions and how to surface them</option>
+<option value="assessment">Assessment ideas aligned to the objectives</option>
+<option value="local">Caribbean cases, data and voices for this topic</option>
+<option value="large">Making this work in a large or fixed-seat room</option>
+<option value="inclusion">Access, language and inclusion for this session</option>
+</select>
+</div>
+<div class="field">
+<label for="coachContext">Anything the coach should know</label>
+<input class="t" id="coachContext" placeholder="Level, prior knowledge, time available">
+</div>
+</div>
+<div class="bar" id="coachBar"><i></i></div>
+<div class="status" id="coachStatus"></div>
+<div class="field"><textarea class="t" id="coachOut" style="min-height:200px" placeholder="Suggestions appear here"></textarea></div>
+<div class="modalfoot">
+<button class="btn quiet" data-close>Close</button>
+<button class="btn quiet" id="btnCoachCopyPersonal">Send to my layer</button>
+<button class="btn" id="btnCoachRun">Get suggestions</button>
+</div>
+</div>
+</div>
+
+<!-- Draft a week -->
+<div class="scrim" id="planScrim">
+<div class="modal">
+<div class="eyebrow" id="planEyebrow">Week 01</div>
+<h3 id="planTitle">Draft this week</h3>
+<p class="hint">The draft is built from what is already in this week &mdash; topic, objectives, readings &mdash; plus your room, class size and personal layer, which it reads for context and never overwrites. Nothing changes until you press Apply, and you choose which parts to take.</p>
+<div class="grid2">
+<div class="field">
+<label for="planContext">Anything it should know</label>
+<input class="t" id="planContext" placeholder="Mixed prior knowledge, first year, evening class&hellip;">
+</div>
+<div class="field">
+<label for="planStyle">Teaching approach to lean on</label>
+<select class="t" id="planStyle">
+<option value="active">Active learning, mixed group and individual</option>
+<option value="discussion">Seminar and structured discussion</option>
+<option value="problem">Problem-based, worked cases</option>
+<option value="studio">Studio or workshop, students making something</option>
+<option value="flipped">Flipped, class time spent applying the readings</option>
+<option value="lecturehall">Large lecture hall, fixed seats, active anyway</option>
+</select>
+</div>
+</div>
+<label class="choice"><input type="checkbox" id="planLocal" checked> Ground examples in the Caribbean and this institution's setting</label>
+<label class="choice"><input type="checkbox" id="planLowTech"> Assume no projector, no internet, board and paper only</label>
+<div class="choice" style="gap:16px;flex-wrap:wrap">
+<label class="choice"><input type="checkbox" class="planPart" value="question" checked> Essential question</label>
+<label class="choice"><input type="checkbox" class="planPart" value="objectives" checked> Objectives</label>
+<label class="choice"><input type="checkbox" class="planPart" value="sequence" checked> Class sequence</label>
+<label class="choice"><input type="checkbox" class="planPart" value="exit" checked> Exit ticket</label>
+<label class="choice"><input type="checkbox" class="planPart" value="concepts" checked> Watch-fors</label>
+<label class="choice"><input type="checkbox" class="planPart" value="fallback" checked> Low-tech fallback</label>
+</div>
+<div class="bar" id="planBar"><i></i></div>
+<div class="status" id="planStatus"></div>
+<div class="preview" id="planPreview" style="display:none;max-height:320px;padding:4px 12px"></div>
+<div class="modalfoot">
+<button class="btn quiet" data-close>Cancel</button>
+<button class="btn quiet" id="btnPlanAllEmpty">Draft every unplanned week</button>
+<button class="btn" id="btnPlanRun">Draft it</button>
+<button class="btn warm" id="btnPlanApply" disabled>Apply to this week</button>
+</div>
+</div>
+</div>
+
+<!-- Export -->
+<div class="scrim" id="exportScrim">
+<div class="modal">
+<div class="eyebrow">Download</div>
+<h3 id="exportTitle">Take the plan with you</h3>
+<div class="field">
+<label for="expScope">What to download</label>
+<select class="t" id="expScope">
+<option value="all">The whole course, every week</option>
+<option value="week">This week only</option>
+<option value="ready">Only weeks I have planned</option>
+</select>
+</div>
+<label class="choice"><input type="checkbox" id="expPersonal" checked> Include my layer and after-class notes</label>
+<label class="choice"><input type="checkbox" id="expQuality" checked> Include the quality check for each week</label>
+<div class="grid2" style="margin-top:6px">
+<div>
+<button class="btn quiet" id="btnDocx" style="width:100%">Download for Word (.doc)</button>
+<p class="hint">Opens in Word or Google Docs. Edit it, hand it to a co-teacher, attach it to a review.</p>
+</div>
+<div>
+<button class="btn quiet" id="btnPdf" style="width:100%">Download as a page (.html) or print to PDF</button>
+<p class="hint">A clean printable plan. Use your browser's Save as PDF from the print dialogue.</p>
+</div>
+</div>
+<div class="grid2">
+<div>
+<button class="btn quiet" id="btnMd" style="width:100%">Download as Markdown (.md)</button>
+<p class="hint">Plain text for an LMS, a wiki, or a handbook.</p>
+</div>
+<div>
+<button class="btn quiet" id="btnJson" style="width:100%">Download backup (.json)</button>
+<p class="hint">This course, restorable into the app on any device.</p>
+</div>
+</div>
+<div class="grid2">
+<div>
+<button class="btn warm" id="btnQA" style="width:100%">Quality assurance dossier</button>
+<p class="hint">Your plan reorganised under the headings a Caribbean accreditation panel asks about, with the evidence already filled in from your weeks.</p>
+</div>
+<div>
+<button class="btn quiet" id="btnCsv" style="width:100%">Download the outcome map (.csv)</button>
+<p class="hint">Week by week: objectives, Bloom's level, teaching moves, evidence and assessment. Opens in Excel.</p>
+</div>
+</div>
+<div class="modalfoot">
+<button class="btn quiet" id="btnEachWeek">Save each week as its own file</button>
+<button class="btn quiet" id="btnJsonAll">Back up every course</button>
+<button class="btn" data-close>Close</button>
+</div>
+</div>
+</div>
+
+<!-- Courses -->
+<div class="scrim" id="coursesScrim">
+<div class="modal">
+<div class="eyebrow">Your courses</div>
+<h3>Everything you teach, in one place</h3>
+<p class="hint">Each course keeps its own weeks, its own outline import, and its own personal layer. Switching is instant and nothing is lost.</p>
+<div class="preview" id="courseList" style="max-height:280px"></div>
+<div class="grid2" style="margin-top:14px">
+<div class="field">
+<label for="newCourseName">Start a new course</label>
+<input class="t" id="newCourseName" placeholder="Course title">
+</div>
+<div class="field">
+<label for="newCourseWeeks">Number of weeks</label>
+<input class="t" id="newCourseWeeks" type="number" min="1" max="52" value="13">
+</div>
+</div>
+<div class="field">
+<label for="restoreFile">Add a course from a backup file</label>
+<input type="file" id="restoreFile" accept=".json" class="t">
+</div>
+<div class="modalfoot">
+<button class="btn quiet" data-close>Close</button>
+<button class="btn quiet" id="btnDuplicate">Duplicate this course</button>
+<button class="btn warm" id="btnNewCourse">Create course</button>
+</div>
+</div>
+</div>
+
+<!-- Settings -->
+<div class="scrim" id="settingsScrim">
+<div class="modal">
+<div class="eyebrow">Settings</div>
+<h3>Course details</h3>
+<div class="grid3">
+<div class="field"><label for="sCode">Course code</label><input class="t" id="sCode" placeholder="EDLA6001"></div>
+<div class="field"><label for="sTerm">Term</label><input class="t" id="sTerm" placeholder="Semester 1, 2026/27"></div>
+<div class="field"><label for="sLevel">Level</label><input class="t" id="sLevel" placeholder="Undergraduate, year 2"></div>
+</div>
+<div class="grid3">
+<div class="field"><label for="sInstitution">Institution</label><input class="t" id="sInstitution" placeholder="Faculty, school or college"></div>
+<div class="field"><label for="sCountry">Country or territory</label><select class="t" id="sCountry"></select></div>
+<div class="field"><label for="sQA">Quality assurance body</label><select class="t" id="sQA"></select></div>
+</div>
+<h3 style="margin-top:18px">The room you actually teach in</h3>
+<div class="grid4">
+<div class="field"><label for="sMinutes">Class length, minutes</label><input class="t" id="sMinutes" type="number" min="20" max="300" step="5"></div>
+<div class="field"><label for="sSize">Typical class size</label><input class="t" id="sSize" type="number" min="1" max="2000"></div>
+<div class="field"><label for="sRoom">Room type</label>
+<select class="t" id="sRoom">
+<option value="flat">Flat room, movable chairs</option>
+<option value="tiered">Tiered lecture theatre, fixed seats</option>
+<option value="seminar">Seminar room, one table</option>
+<option value="lab">Laboratory or studio</option>
+<option value="field">Off campus or field site</option>
+</select></div>
+<div class="field"><label for="sTech">Technology you can rely on</label>
+<select class="t" id="sTech">
+<option value="good">Projector and internet, usually fine</option>
+<option value="patchy">Projector yes, internet patchy</option>
+<option value="none">Board and paper only</option>
+</select></div>
+</div>
+<div class="field">
+<label for="sPLO">Programme learning outcomes <span class="tag sea">used for mapping</span></label>
+<textarea class="t short" id="sPLO" placeholder="One per line. The outcomes your programme is accredited against; weeks are mapped to these in the quality dossier."></textarea>
+</div>
+<h3 style="margin-top:18px">AI</h3>
+<div class="field">
+<label for="sKey">Anthropic API key <span class="tag you">this browser only</span></label>
+<input class="t" id="sKey" type="password" placeholder="sk-ant-&hellip;" autocomplete="off">
+<p class="hint">Leave this empty if the site is hosted somewhere that runs <code>api/claude.js</code>, such as Vercel &mdash; the key then lives on the server and nobody has to paste anything. On GitHub Pages, or when you open the file straight off your own machine, there is no server, so paste a key here to switch on drafting and the coach. It stays in this browser, is never sent to GitHub or anyone else, and goes only to Anthropic. Everything else in the planner works with no key and no internet.</p>
+</div>
+<div class="modalfoot">
+<button class="btn quiet" id="btnWipe">Erase every week in this course</button>
+<button class="btn" data-close>Done</button>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ============================================================
+   ActiveCourse Studio
+   A week-by-week planner for Caribbean higher education:
+   active learning, constructive alignment, face-to-face quality.
+   Single file. No build step. Everything except the AI works offline.
+   ============================================================ */
+
+const IDX = "activecourse-index";
+const OLD = "activecourse-v2";
+const cKey = id => "activecourse:course:" + id;
+
+const MODES = {
+  open:   {label:"Open",   color:"#1C6B5B", kind:"frame",  blurb:"settles the room and surfaces what they already carry"},
+  input:  {label:"Input",  color:"#9DB6AE", kind:"listen", blurb:"you are talking, they are receiving"},
+  active: {label:"Active", color:"#A96A12", kind:"work",   blurb:"they are doing the thinking, out loud or on paper"},
+  apply:  {label:"Apply",  color:"#C79A4E", kind:"work",   blurb:"they use it on a real problem, case or artefact"},
+  check:  {label:"Check",  color:"#134A3F", kind:"work",   blurb:"you find out what actually landed"},
+  close:  {label:"Close",  color:"#63756F", kind:"frame",  blurb:"they consolidate and you collect evidence"}
+};
+const GROUPS = {
+  whole:      "Whole class",
+  pairs:      "Pairs",
+  small:      "Small groups",
+  individual: "Individual",
+  circulate:  "You circulate"
+};
+const ROOMS = {
+  flat:"Flat room, movable chairs", tiered:"Tiered theatre, fixed seats",
+  seminar:"Seminar room", lab:"Laboratory or studio", field:"Off campus or field"
+};
+const TECHS = {
+  good:"Projector and internet usually fine", patchy:"Projector yes, internet patchy", none:"Board and paper only"
+};
+const COUNTRIES = ["","Anguilla","Antigua and Barbuda","Aruba","Bahamas","Barbados","Belize","Bermuda","British Virgin Islands","Cayman Islands","Cuba","Curacao","Dominica","Dominican Republic","Grenada","Guyana","Haiti","Jamaica","Montserrat","Puerto Rico","St Kitts and Nevis","St Lucia","St Vincent and the Grenadines","Sint Maarten","Suriname","Trinidad and Tobago","Turks and Caicos","US Virgin Islands","Other Caribbean","Outside the Caribbean"];
+const QA_BODIES = {
+  "":"Not set",
+  ucj:"University Council of Jamaica (UCJ)",
+  actt:"Accreditation Council of Trinidad and Tobago (ACTT)",
+  bac:"Barbados Accreditation Council (BAC)",
+  gnab:"Guyana National Accreditation Council",
+  bznaes:"Belize / other national body",
+  uwi:"UWI internal quality assurance",
+  cqf:"CARICOM Qualifications Framework alignment",
+  canqate:"CANQATE member institution",
+  other:"Other or generic quality framework"
+};
+
+/* Bloom's, in the revised order. Verbs are matched on the first word of an objective. */
+const BLOOM = [
+  {key:"remember",  label:"Remember",  rank:1, verbs:["define","list","name","recall","identify","state","label","recognise","recognize","match","repeat","record","locate","cite"]},
+  {key:"understand",label:"Understand",rank:2, verbs:["explain","describe","summarise","summarize","interpret","classify","discuss","illustrate","paraphrase","outline","restate","report","review","translate","exemplify"]},
+  {key:"apply",     label:"Apply",     rank:3, verbs:["apply","use","demonstrate","calculate","solve","implement","execute","operate","carry","perform","practise","practice","compute","employ","conduct","administer","model"]},
+  {key:"analyse",   label:"Analyse",   rank:4, verbs:["analyse","analyze","differentiate","compare","contrast","examine","deconstruct","investigate","distinguish","categorise","categorize","diagnose","attribute","trace","map","test"]},
+  {key:"evaluate",  label:"Evaluate",  rank:5, verbs:["evaluate","critique","judge","assess","justify","defend","appraise","argue","recommend","prioritise","prioritize","rank","validate","weigh","select"]},
+  {key:"create",    label:"Create",    rank:6, verbs:["create","design","develop","compose","construct","formulate","plan","devise","generate","produce","synthesise","synthesize","build","write","propose","adapt","invent","curate"]}
+];
+const STOP_STEMS = /^(?:students?\s+(?:will\s+be\s+able\s+to|will|should\s+be\s+able\s+to|should|can)\s+|by\s+the\s+end[^,]*,\s*|learners?\s+(?:will\s+be\s+able\s+to|will|should)\s+|be\s+able\s+to\s+|to\s+)/i;
+
+/* ---------- storage: Claude artifact storage, else this browser ---------- */
+const store = {
+  async get(k){
+    if (window.storage && window.storage.get) {
+      try { const r = await window.storage.get(k); return r ? r.value : null; } catch(e) {}
+    }
+    try { return localStorage.getItem(k); } catch(e) { return null; }
+  },
+  async set(k,v){
+    if (window.storage && window.storage.set) {
+      try { await window.storage.set(k,v); return true; } catch(e) {}
+    }
+    try { localStorage.setItem(k,v); return true; } catch(e) { return false; }
+  },
+  async del(k){
+    if (window.storage && window.storage.delete) {
+      try { await window.storage.delete(k); } catch(e) {}
+    }
+    try { localStorage.removeItem(k); } catch(e) {}
+  }
+};
+
+/* ---------- model ---------- */
+function blankSequence(total){
+  const t = total || 90;
+  const r = n => Math.max(5, Math.round(t*n/5)*5);
+  return [
+    {min:r(0.10), title:"Opening: surface what they already think", mode:"open",   group:"pairs",      notes:"", evidence:"", tech:false},
+    {min:r(0.20), title:"Mini-input on the core idea",              mode:"input",  group:"whole",      notes:"", evidence:"", tech:true},
+    {min:r(0.30), title:"Active learning task",                     mode:"active", group:"small",      notes:"", evidence:"", tech:false},
+    {min:r(0.25), title:"Apply it to a case or problem",            mode:"apply",  group:"small",      notes:"", evidence:"", tech:false},
+    {min:r(0.15), title:"Synthesis and exit ticket",                mode:"close",  group:"individual", notes:"", evidence:"", tech:false}
+  ];
+}
+function blankWeek(n, total){
+  return {
+    no:n, topic:"", question:"", objectives:"", readings:"", assessment:"", concepts:"",
+    sequence: blankSequence(total), exit:"",
+    room:{seats:"", room:"", groups:"", fallback:""},
+    personal:{hook:"",local:"",adapt:"",materials:"",notes:""},
+    after:{notes:"",evidence:"",reflect:"",bridge:""},
+    imported:null
+  };
+}
+function newId(){ return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function blankCourse(title){
+  return {title:title||"", code:"", term:"", level:"", institution:"", country:"", qa:"",
+          minutes:90, size:35, room:"flat", tech:"patchy", plos:""};
+}
+function freshState(title, weeks){
+  const n = Math.min(52, Math.max(1, weeks || 13));
+  return {
+    id: newId(),
+    course: blankCourse(title),
+    weeks: Array.from({length:n},(_,i)=>blankWeek(i+1,90)),
+    selected:1
+  };
+}
+let library = {courses:[], current:null, settings:{apiKey:""}};
+let state = freshState();
+let staged = null;
+let rawText = "";
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const week = () => state.weeks[state.selected-1];
+const lines = v => String(v||"").split("\n").map(s=>s.trim()).filter(Boolean);
+const pad = n => String(n).padStart(2,"0");
+const clamp = (n,a,b) => Math.min(b, Math.max(a, n));
+const plural = (n, one, many) => n + " " + (n === 1 ? one : (many || one + "s"));
+let toastTimer;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("on"), 3200);
+}
+/* the room and size that actually apply to a given week */
+function seatsFor(w){ return parseInt(w.room && w.room.seats, 10) || parseInt(state.course.size,10) || 35; }
+function roomFor(w){ return (w.room && w.room.room) || state.course.room || "flat"; }
+
+/* ---------- save / load ---------- */
+let saveTimer, saving = false;
+function queueSave(){
+  $("savedFlag").textContent = "Saving";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 500);
+}
+async function save(){
+  if (saving) return;
+  saving = true;
+  const entry = library.courses.find(c=>c.id===state.id);
+  const stamp = new Date().toISOString();
+  const summary = {
+    id:state.id, title:state.course.title||"Untitled course", code:state.course.code||"",
+    term:state.course.term||"", weeks:state.weeks.length, updated:stamp
+  };
+  if (entry) Object.assign(entry, summary); else library.courses.push(summary);
+  library.current = state.id;
+  const a = await store.set(cKey(state.id), JSON.stringify(state));
+  const b = await store.set(IDX, JSON.stringify(library));
+  saving = false;
+  $("savedFlag").textContent = (a && b) ? "Saved" : "Not saved";
+  paintPicker();
+}
+/* fill in anything a saved or imported course document is missing */
+function hydrate(d){
+  const s = {id: d.id || newId(), selected: 1};
+  s.course = Object.assign(blankCourse(), d.course||{});
+  s.course.minutes = clamp(parseInt(s.course.minutes,10)||90, 20, 300);
+  s.course.size = clamp(parseInt(s.course.size,10)||35, 1, 2000);
+  if (!ROOMS[s.course.room]) s.course.room = "flat";
+  if (!TECHS[s.course.tech]) s.course.tech = "patchy";
+  const src = Array.isArray(d.weeks) && d.weeks.length ? d.weeks : freshState().weeks;
+  s.weeks = src.map((w,i)=>{
+    const b = blankWeek(i+1, s.course.minutes);
+    const m = Object.assign(b, w);
+    m.room = Object.assign(b.room, w.room||{});
+    m.personal = Object.assign(b.personal, w.personal||{});
+    m.after = Object.assign(b.after, w.after||{});
+    if (!Array.isArray(m.sequence) || !m.sequence.length) m.sequence = blankSequence(s.course.minutes);
+    m.sequence = m.sequence.map(a=>({
+      min: Math.max(0, parseInt(a.min,10)||0),
+      title: String(a.title||"Untitled move"),
+      mode: MODES[a.mode] ? a.mode : "active",
+      group: GROUPS[a.group] ? a.group : "whole",
+      notes: String(a.notes||""),
+      evidence: String(a.evidence||""),
+      tech: !!a.tech
+    }));
+    m.no = i+1;
+    return m;
+  });
+  s.selected = clamp(parseInt(d.selected,10)||1, 1, s.weeks.length);
+  return s;
+}
+async function loadCourse(id){
+  const raw = await store.get(cKey(id));
+  if (!raw) return false;
+  try { state = hydrate(JSON.parse(raw)); state.id = id; return true; }
+  catch(e){ console.warn("Could not read course", e); return false; }
+}
+async function load(){
+  const rawIdx = await store.get(IDX);
+  if (rawIdx) {
+    try {
+      const d = JSON.parse(rawIdx);
+      library.courses = Array.isArray(d.courses) ? d.courses : [];
+      library.current = d.current || (library.courses[0] && library.courses[0].id);
+      library.settings = Object.assign({apiKey:""}, d.settings||{});
+    } catch(e){}
+  }
+  if (!library.courses.length) {
+    const legacy = await store.get(OLD);
+    if (legacy) {
+      try {
+        const d = JSON.parse(legacy);
+        if (d && Array.isArray(d.weeks) && d.weeks.length) {
+          state = hydrate(d);
+          library.settings.apiKey = (d.settings && d.settings.apiKey) || "";
+          await save();
+          await store.del(OLD);
+          return;
+        }
+      } catch(e){}
+    }
+  }
+  if (library.current && await loadCourse(library.current)) return;
+  if (library.courses.length && await loadCourse(library.courses[0].id)) return;
+  state = freshState();
+  await save();
+}
+async function switchCourse(id){
+  if (id === state.id) return;
+  readForm(); await save();
+  if (await loadCourse(id)) {
+    library.current = id;
+    await store.set(IDX, JSON.stringify(library));
+    paintCourse(); paintWeek(); paintPicker();
+    toast("Now editing " + (state.course.title || "your course"));
+  }
+}
+async function createCourse(title, weeks){
+  readForm(); await save();
+  const carry = state.course;
+  state = freshState(title, weeks);
+  /* a lecturer's room, size and country rarely change between their own courses */
+  Object.assign(state.course, {
+    country:carry.country, institution:carry.institution, qa:carry.qa,
+    minutes:carry.minutes, size:carry.size, room:carry.room, tech:carry.tech
+  });
+  state.weeks = state.weeks.map((w,i)=>blankWeek(i+1, state.course.minutes));
+  await save();
+  paintCourse(); paintWeek(); closeAll();
+  toast("Course created. Import an outline, or start typing into week one.");
+}
+async function duplicateCourse(){
+  readForm();
+  const copy = JSON.parse(JSON.stringify(state));
+  await save();
+  copy.id = newId();
+  copy.course.title = (copy.course.title || "Untitled course") + " (copy)";
+  state = copy;
+  await save();
+  paintCourse(); paintWeek(); closeAll();
+  toast("Duplicated");
+}
+async function deleteCourse(id){
+  const entry = library.courses.find(c=>c.id===id);
+  if (!entry) return;
+  if (!confirm("Delete " + (entry.title||"this course") + " and all its weeks? Download a backup first if you want to keep it.")) return;
+  library.courses = library.courses.filter(c=>c.id!==id);
+  await store.del(cKey(id));
+  if (id === state.id) {
+    if (library.courses.length) { await loadCourse(library.courses[0].id); }
+    else { state = freshState(); }
+  }
+  await save();
+  paintCourse(); paintWeek(); paintCourseList();
+  toast("Deleted");
+}
+
+/* ---------- reading the form back into the model ---------- */
+const FIELDS = [["topic","topic"],["question","question"],["objectives","objectives"],["readings","readings"],
+                ["assessment","assessment"],["concepts","concepts"],["exit","exit"]];
+const RFIELDS = [["wSeats","seats"],["wRoom","room"],["wGroups","groups"],["wFallback","fallback"]];
+const PFIELDS = [["pHook","hook"],["pLocal","local"],["pAdapt","adapt"],["pMaterials","materials"],["pNotes","notes"]];
+const AFIELDS = [["aNotes","notes"],["aEvidence","evidence"],["aReflect","reflect"],["aBridge","bridge"]];
+
+function readForm(){
+  const w = week(); if (!w) return;
+  FIELDS.forEach(([id,k])=> w[k] = $(id).value);
+  RFIELDS.forEach(([id,k])=> w.room[k] = $(id).value);
+  PFIELDS.forEach(([id,k])=> w.personal[k] = $(id).value);
+  AFIELDS.forEach(([id,k])=> w.after[k] = $(id).value);
+  state.course.title = $("courseTitle").value;
+  w.sequence = [...document.querySelectorAll(".act")].map(el=>({
+    min: Math.max(0, parseInt(el.querySelector(".m").value,10) || 0),
+    title: el.querySelector(".ti").value,
+    mode: el.querySelector(".md").value,
+    group: el.querySelector(".gp").value,
+    notes: el.querySelector(".nt").value,
+    evidence: el.querySelector(".ev").value,
+    tech: el.querySelector(".tc").checked
+  }));
+}
+function onEdit(){ readForm(); paintRibbon(); paintRail(); paintBadges(); paintQuality(); queueSave(); }
+
+/* ============================================================
+   Bloom's detection and the offline teaching quality check
+   ============================================================ */
+
+function bloomOf(line){
+  let t = String(line||"").toLowerCase().replace(/^[\s\-•*•–\d.)]+/,"").trim();
+  let prev;
+  do { prev = t; t = t.replace(STOP_STEMS,"").trim(); } while (t !== prev && t);
+  const first = (t.split(/[^a-z]+/).filter(Boolean)[0]) || "";
+  if (!first) return null;
+  for (const b of BLOOM) if (b.verbs.indexOf(first) > -1) return b;
+  return null;
+}
+function bloomsIn(text){
+  return lines(text).map(l=>({line:l, bloom:bloomOf(l)}));
+}
+
+const STOPWORDS = new Set(("the a an and or of to in on for with by from as at is are was were be been being "
+ + "their they them this that these those will would can could should shall must students student learners learner "
+ + "able week course class about into over under between more most other such not only own same than too very "
+ + "using use used within across through each any some what which when where while also given upon toward towards").split(/\s+/));
+function stem(x){ return x.replace(/ies$/,"y").replace(/(ings|ing|edly|ed|es|s)$/,""); }
+function keywords(s){
+  const out = new Set();
+  String(s||"").toLowerCase().split(/[^a-z]+/).forEach(w=>{
+    if (w.length >= 4 && !STOPWORDS.has(w)) out.add(stem(w));
+  });
+  return out;
+}
+function timeProfile(w){
+  const seq = w.sequence || [];
+  const total = seq.reduce((s,a)=>s+(a.min||0),0);
+  const by = {frame:0, listen:0, work:0};
+  seq.forEach(a=>{ const k = (MODES[a.mode]||MODES.input).kind; by[k] += (a.min||0); });
+  return {
+    total, frame:by.frame, listen:by.listen, work:by.work,
+    workPct: total ? by.work/total*100 : 0,
+    listenPct: total ? by.listen/total*100 : 0
+  };
+}
+/* which objectives are actually touched by something that happens in the room */
+function alignment(w){
+  const objs = lines(w.objectives);
+  if (!objs.length) return {objs:[], orphans:[], pct:0};
+  const sessionText = (w.sequence||[]).map(a=>a.title + " " + a.notes + " " + a.evidence).join(" ")
+    + " " + (w.exit||"") + " " + (w.question||"") + " " + (w.concepts||"");
+  const pool = keywords(sessionText);
+  const orphans = [];
+  objs.forEach(o=>{
+    const ks = [...keywords(o)];
+    const hit = ks.length ? ks.some(k=>pool.has(k)) : false;
+    if (!hit) orphans.push(o);
+  });
+  return {objs, orphans, pct: Math.round((objs.length-orphans.length)/objs.length*100)};
+}
+function planned(w){
+  return !!(w.topic && w.topic.trim()) && (w.sequence||[]).some(a=>a.notes && a.notes.trim());
+}
+
+/* The check itself. Everything here is computed locally, in a millisecond, with no network. */
+function analyse(w){
+  const checks = [];
+  const add = (level, title, detail) => checks.push({level, title, detail});
+  const t = timeProfile(w);
+  const target = state.course.minutes || 90;
+  const seq = w.sequence || [];
+  const objs = lines(w.objectives);
+  const seats = seatsFor(w);
+  const room = roomFor(w);
+  const tech = state.course.tech || "patchy";
+  const al = alignment(w);
+  const bl = bloomsIn(w.objectives);
+  const topBloom = bl.map(b=>b.bloom).filter(Boolean).sort((a,b)=>b.rank-a.rank)[0];
+
+  /* 1. the spine */
+  if (!w.topic || !w.topic.trim()) add("bad","No topic yet","Give the week a topic and everything else in this panel becomes meaningful.");
+  else add("ok","Topic set", w.topic.trim());
+
+  if (!w.question || !w.question.trim())
+    add("warn","No essential question","One arguable question per session gives students something to hold on to and gives you a way to close. Write the question they should be able to answer on the way out.");
+  else if (!/[?]/.test(w.question))
+    add("warn","The essential question is not a question","Phrase it as a question students could genuinely argue either way, not as a statement of the topic.");
+  else add("ok","Essential question set", w.question.trim());
+
+  /* 2. objectives and Bloom's */
+  if (!objs.length) add("bad","No learning objectives","Without objectives nothing else can be aligned to anything. Three to five is usually right for one session.");
+  else {
+    const noVerb = bl.filter(b=>!b.bloom).map(b=>b.line);
+    if (objs.length > 6)
+      add("warn", objs.length + " objectives for one session","Five is a lot for ninety minutes and six is usually a list of topics wearing a costume. Fold them together or move some to the following week.");
+    else add("ok", objs.length + " learning objectives", "");
+
+    if (noVerb.length)
+      add("warn", noVerb.length + " objective" + (noVerb.length>1?"s do":" does") + " not start with an action verb",
+          "An objective a student cannot be observed doing cannot be assessed. Rewrite: “" + noVerb[0].slice(0,70) + "”");
+    else add("ok","Every objective starts with an action verb","");
+
+    if (topBloom && topBloom.rank <= 2)
+      add("warn","Everything sits at recall and understanding",
+          "The highest level you ask for this week is " + topBloom.label.toLowerCase() + ". At this level students can pass without being able to use any of it. Push at least one objective to apply, analyse or evaluate.");
+    else if (topBloom)
+      add("ok","Reaches " + topBloom.label.toLowerCase() + " level thinking","");
+  }
+
+  /* 3. the shape of the session */
+  if (!t.total) add("bad","The session has no minutes in it","Add the moves that make up the class.");
+  else {
+    if (Math.abs(t.total-target) > Math.max(6, target*0.1))
+      add("warn","The sequence runs " + (t.total>target ? (t.total-target) + " minutes long" : (target-t.total) + " minutes short"),
+          "You have planned " + t.total + " minutes for a " + target + " minute class. Overrunning plans get cut from the end, which is where the consolidation lives. Use Rebalance to fix it.");
+    else add("ok","Timing fits the class length", t.total + " of " + target + " minutes planned");
+
+    if (t.workPct < 25)
+      add("bad","Students are working for only " + Math.round(t.workPct) + "% of the class",
+          "Below a quarter, this is a lecture with pauses. Aim for at least 45%: swap one input block for a task from the move library.");
+    else if (t.workPct < 45)
+      add("warn","Students are working for " + Math.round(t.workPct) + "% of the class",
+          "Respectable, not yet active. Getting past 45% is usually one swap: turn your longest input block into a think-pair-share or a worked-example-then-fade.");
+    else add("ok", Math.round(t.workPct) + "% of the class is students working","");
+
+    if (t.listenPct > 50)
+      add("bad","You are talking for " + Math.round(t.listenPct) + "% of the class",
+          "Attention to continuous exposition falls away sharply after ten to fifteen minutes. Break the input into shorter pieces with something to do between them.");
+    else if (t.listenPct > 33)
+      add("warn","You are talking for " + Math.round(t.listenPct) + "% of the class",
+          "A third is about the ceiling if the session is to stay active. Trim the input, or fold part of it into a guided task.");
+    else add("ok","Transmission is held to " + Math.round(t.listenPct) + "% of the class","");
+
+    const longest = seq.filter(a=>(MODES[a.mode]||{}).kind==="listen").sort((a,b)=>b.min-a.min)[0];
+    if (longest && longest.min > 20)
+      add("warn","One unbroken input block of " + longest.min + " minutes","“" + (longest.title||"that block") + "” runs past the point where most of the room has stopped following. Split it, or insert a two-minute pause procedure in the middle.");
+
+    const hasOpen = seq.some(a=>a.mode==="open");
+    const hasClose = seq.some(a=>a.mode==="close" || a.mode==="check");
+    if (!hasOpen) add("warn","Nothing opens the session","The first five minutes decide whether the rest lands. Surface prior knowledge, or start from something they saw this week.");
+    if (!hasClose) add("bad","Nothing closes the session","Without a consolidation move you finish on whatever the clock lands on and you leave with no evidence.");
+    if (hasOpen && hasClose) add("ok","The session opens and closes deliberately","");
+  }
+
+  /* 4. evidence */
+  const withEvidence = seq.filter(a=>a.evidence && a.evidence.trim()).length;
+  const hasExit = !!(w.exit && w.exit.trim());
+  if (!withEvidence && !hasExit)
+    add("bad","No evidence of learning is collected","You will leave the room with an impression rather than a finding. Name what each task produces, and write an exit ticket.");
+  else if (withEvidence < 2 || !hasExit)
+    add("warn","Evidence is thin","" + (hasExit ? "You have an exit ticket" : "No exit ticket yet") + " and " + withEvidence + " move" + (withEvidence===1?"":"s") + " with the evidence named. Two or three collection points across the session is the usual minimum a reviewer looks for.");
+  else add("ok","Evidence collected at " + withEvidence + " points, plus an exit ticket","");
+
+  /* 5. alignment */
+  if (objs.length && seq.length) {
+    if (al.orphans.length)
+      add(al.orphans.length === objs.length ? "bad" : "warn",
+          al.orphans.length + " objective" + (al.orphans.length>1?"s are":" is") + " never practised in class",
+          "Nothing in the sequence, the exit ticket or the essential question touches: “" + al.orphans[0].slice(0,80) + "”. Either build a move for it or move it out of this week.");
+    else add("ok","Every objective is practised in the room","");
+  }
+  if (lines(w.assessment).length) {
+    const pool = keywords(seq.map(a=>a.title+" "+a.notes).join(" ") + " " + w.exit);
+    const aKeys = [...keywords(w.assessment)];
+    const touched = aKeys.length ? aKeys.some(k=>pool.has(k)) : false;
+    if (!touched)
+      add("warn","The assessment is not rehearsed in class","Something is due or in progress this week but nothing in the session prepares for it. Ten minutes of the real task, with feedback, is worth more than any reminder.");
+    else add("ok","Class time rehearses the assessment in play","");
+  }
+
+  /* 6. the room */
+  const groupsUsed = new Set(seq.map(a=>a.group));
+  if (seq.length >= 3 && groupsUsed.size === 1)
+    add("warn","Every move uses the same grouping","The whole class in one configuration for ninety minutes flattens participation. Vary between individual thinking, pairs and small groups.");
+  else if (seq.length >= 3) add("ok","Grouping varies across the session","");
+
+  if (room === "tiered" && seq.some(a=>a.group === "small") && !(w.room && w.room.groups && w.room.groups.trim()))
+    add("warn","Small groups in fixed tiered seating","Say how groups form when nobody can move: threes along a row, or a row talking to the row in front. Written down now, it takes ten seconds in the room.");
+
+  if (seats >= 60) {
+    const okAtScale = seq.filter(a=>a.group==="pairs" || a.group==="individual" || a.group==="whole").length;
+    if (okAtScale < seq.length/2)
+      add("warn","Most moves assume a small room, but you expect " + seats + " students",
+          "At this size, pair work, voting and written slips scale; free-forming small groups and full-class discussion do not. The move library can filter for large classes.");
+    else add("ok","The moves scale to " + seats + " students","");
+  }
+
+  const techMins = seq.filter(a=>a.tech).reduce((s,a)=>s+(a.min||0),0);
+  if (tech !== "good" && t.total && techMins/t.total > 0.5 && !(w.room && w.room.fallback && w.room.fallback.trim()))
+    add("warn", Math.round(techMins/t.total*100) + "% of the class depends on technology you cannot rely on",
+        "You have recorded the room as “" + TECHS[tech].toLowerCase() + "”. Write the board-and-paper version of this session in the fallback box, once, and stop improvising it.");
+  else if (w.room && w.room.fallback && w.room.fallback.trim())
+    add("ok","A low-technology fallback is written down","");
+
+  /* 7. inclusion, and the layer that makes it yours */
+  if (!(w.personal.adapt||"").trim())
+    add("warn","No adjustments recorded for this group","Note the access, language and pacing decisions you are making, even briefly. It is the first thing an inclusion review asks for and the first thing you forget by next year.");
+  else add("ok","Adjustments for this group are recorded","");
+
+  if (!(w.personal.local||"").trim() && (state.course.country && state.course.country !== "Outside the Caribbean"))
+    add("warn","No local or regional example yet","A week taught entirely from imported cases teaches students that the important examples happen elsewhere. One local case is enough to change that.");
+  else if ((w.personal.local||"").trim()) add("ok","Grounded in local and lived examples","");
+
+  if (!lines(w.readings).length)
+    add("warn","No readings or resources listed","Even one anchor text per week gives students somewhere to go when the session moves faster than they do.");
+
+  /* score */
+  const weight = {ok:1, warn:0.5, bad:0};
+  const scored = checks.filter(c=>c.level!=="info");
+  const score = scored.length ? Math.round(scored.reduce((s,c)=>s+weight[c.level],0)/scored.length*100) : 0;
+  const verdict = !w.topic || !w.topic.trim() ? "not planned"
+    : score >= 85 ? "ready to teach"
+    : score >= 70 ? "solid, small fixes"
+    : score >= 50 ? "needs work"
+    : "early draft";
+
+  const bars = [
+    {label:"Students working", pct: Math.round(t.workPct),   good: t.workPct >= 45,  color: t.workPct >= 45 ? MODES.active.color : (t.workPct >= 25 ? "#C79A4E" : "#A2402C"), note: Math.round(t.workPct)+"%"},
+    {label:"You talking",      pct: Math.round(t.listenPct), good: t.listenPct <= 33, color: t.listenPct <= 33 ? MODES.open.color : (t.listenPct <= 50 ? "#C79A4E" : "#A2402C"), note: Math.round(t.listenPct)+"%"},
+    {label:"Objectives met",   pct: al.pct,                  good: al.pct >= 100,     color: al.pct >= 100 ? MODES.open.color : (al.pct >= 60 ? "#C79A4E" : "#A2402C"), note: (al.objs.length - al.orphans.length) + "/" + al.objs.length},
+    {label:"Evidence points",  pct: Math.min(100,(withEvidence + (hasExit?1:0))/3*100), good: (withEvidence + (hasExit?1:0)) >= 3, color: (withEvidence+(hasExit?1:0)) >= 3 ? MODES.check.color : "#C79A4E", note: String(withEvidence + (hasExit?1:0))}
+  ];
+
+  return {score, verdict, checks, bars, time:t, alignment:al, blooms:bl, topBloom, seats, evidencePoints: withEvidence + (hasExit?1:0)};
+}
+
+/* ============================================================
+   The move library: named face-to-face techniques
+   max = largest class it survives (0 = no ceiling)
+   fixed = works in tiered fixed seating
+   tech = needs a projector, power or internet
+   writes = produces a written artefact you can collect
+   ============================================================ */
+const LIBRARY = [
+{n:"Think, pair, share", m:10, mode:"active", group:"pairs", max:0, fixed:true, tech:false, writes:false,
+ ev:"Two or three pair answers, sampled aloud; the split of the room on a contested point",
+ d:"Pose one question. Ninety seconds of silent individual thinking, two minutes with the person beside them, then you take three pairs. The silence at the start is the part people skip and it is the part that works.",
+ tags:["discussion","warm-up","any size"]},
+{n:"Peer instruction (ConcepTest)", m:12, mode:"check", group:"pairs", max:0, fixed:true, tech:false, writes:false,
+ ev:"Vote distribution before and after discussion; the misconception that survives",
+ d:"Ask a multiple-choice question that hinges on a known misconception. Silent vote by show of hands or coloured cards. If the room splits, they argue in pairs and vote again. If they do not split, move on.",
+ tags:["misconceptions","voting","any size"]},
+{n:"Muddiest point", m:5, mode:"check", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Slips naming what is still unclear; the two you address at the start of next week",
+ d:"Two minutes, on a slip of paper: what is still muddy. Collect them. Read three aloud without comment. Open next week with the two that repeated.",
+ tags:["feedback","quick","any size"]},
+{n:"One-minute paper", m:6, mode:"close", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"A written statement of the main point per student",
+ d:"One minute at the end: what was the most important thing in this class, and what question remains. It is the cheapest evidence of learning there is.",
+ tags:["closing","evidence","any size"]},
+{n:"Exit ticket", m:5, mode:"close", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"One worked answer or judgement per student, handed in at the door",
+ d:"One question that only someone who followed the session can answer. Not a feelings question. They hand it to you on the way out, which also tells you who left early.",
+ tags:["closing","evidence","any size"]},
+{n:"Entrance ticket", m:5, mode:"open", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Prior knowledge and reading completion, in writing, before you teach",
+ d:"A question from the reading, answered on paper in the first four minutes. You learn who read it before you build a session on the assumption that they did.",
+ tags:["opening","reading","any size"]},
+{n:"Pause procedure", m:6, mode:"check", group:"pairs", max:0, fixed:true, tech:false, writes:false,
+ ev:"Corrected and completed notes; questions surfaced mid-lecture rather than never",
+ d:"Three times in a long input block, stop for two minutes. They compare notes with a neighbour and fill the gaps. It costs six minutes and measurably improves what is retained.",
+ tags:["lecture","large class","retention"]},
+{n:"Snowball, one to two to four", m:15, mode:"active", group:"small", max:0, fixed:true, tech:false, writes:true,
+ ev:"A group position that has already survived two rounds of argument",
+ d:"Alone, then in pairs, then fours: each round has to agree on one answer before it grows. Positions arrive at the whole class already tested.",
+ tags:["discussion","consensus"]},
+{n:"Jigsaw", m:30, mode:"active", group:"small", max:120, fixed:false, tech:false, writes:true,
+ ev:"Each student's teaching notes on their piece; the accuracy of what they taught each other",
+ d:"Split the material into four pieces. Expert groups master one piece, then re-form into mixed groups where each person teaches theirs. Nobody can opt out, which is the point.",
+ tags:["reading","interdependence"]},
+{n:"Reciprocal teaching", m:25, mode:"active", group:"small", max:80, fixed:false, tech:false, writes:false,
+ ev:"The questions students generate about a text, and their summaries",
+ d:"In fours, students take turns as summariser, questioner, clarifier and predictor over a difficult passage. Best on the text your students always say was too hard.",
+ tags:["reading","comprehension"]},
+{n:"Gallery walk", m:20, mode:"active", group:"small", max:150, fixed:false, tech:false, writes:true,
+ ev:"Posters plus the written comments each group left on the others",
+ d:"Groups put work on the walls. Everyone circulates with a marker, leaving one question and one challenge per poster. Groups return to read what they were asked.",
+ tags:["peer feedback","movement"]},
+{n:"Chalk talk", m:15, mode:"active", group:"whole", max:60, fixed:false, tech:false, writes:true,
+ ev:"The board itself: a written record of every line of the argument",
+ d:"A question in the middle of the board. Everyone writes, nobody speaks, and they may connect and reply to each other in writing. Silence gets the quiet ones in.",
+ tags:["silent","inclusion"]},
+{n:"Four corners", m:10, mode:"open", group:"whole", max:200, fixed:true, tech:false, writes:false,
+ ev:"Where the room physically stands on a claim, and the best reason from each corner",
+ d:"A contestable statement, four positions, four corners of the room. In fixed seating, four coloured cards held up. Then one reason from each corner before anyone may move.",
+ tags:["opening","position","any size"]},
+{n:"Structured academic controversy", m:35, mode:"active", group:"small", max:100, fixed:false, tech:false, writes:true,
+ ev:"Each side's written case, then the joint position they were forced to reach",
+ d:"Fours split into two pairs, each assigned a side. They argue it, then swap sides and argue the other, then drop the roles and write one position together.",
+ tags:["debate","policy","argument"]},
+{n:"Fishbowl discussion", m:20, mode:"active", group:"whole", max:60, fixed:false, tech:false, writes:true,
+ ev:"Observer notes on the quality of reasoning, not just the conclusions",
+ d:"Six students discuss in the middle; everyone else observes with a specific brief and takes notes. One empty chair inside lets an observer tap in.",
+ tags:["discussion","modelling"]},
+{n:"Question formulation technique", m:20, mode:"open", group:"small", max:120, fixed:true, tech:false, writes:true,
+ ev:"The students' own prioritised questions, which become the session's agenda",
+ d:"Give a provocative focus statement. Groups produce as many questions as they can without stopping to judge, then improve, then choose three. You teach their three.",
+ tags:["inquiry","student-led"]},
+{n:"Predict, observe, explain", m:15, mode:"active", group:"pairs", max:0, fixed:true, tech:false, writes:true,
+ ev:"Written predictions, then the gap between prediction and result",
+ d:"They commit a prediction to paper before you run the demonstration, case or data reveal. Committing first is what makes the surprise stick.",
+ tags:["science","demonstration","misconceptions"]},
+{n:"Two-stage quiz", m:20, mode:"check", group:"small", max:150, fixed:true, tech:false, writes:true,
+ ev:"Individual scores and group scores, and the questions groups fixed",
+ d:"They sit a short quiz alone and hand it in, then immediately re-sit the same quiz in fours, arguing to consensus. The argument is the teaching.",
+ tags:["assessment","peer learning"]},
+{n:"Error hunt", m:12, mode:"active", group:"pairs", max:0, fixed:true, tech:false, writes:true,
+ ev:"The errors found and, more usefully, the ones missed",
+ d:"Hand out a worked solution, argument or piece of code with three deliberate faults. Pairs find and justify. What they miss is your next teaching point.",
+ tags:["diagnostic","practice"]},
+{n:"Worked example, then fade", m:22, mode:"apply", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Each student's completed problem, with the steps they needed help on visible",
+ d:"You do one in full. The next is half done and they finish it. The third is bare. Cognitive load drops away exactly as fast as they can carry it.",
+ tags:["problem solving","scaffolding"]},
+{n:"Case study analysis", m:30, mode:"apply", group:"small", max:120, fixed:false, tech:false, writes:true,
+ ev:"A group recommendation with the evidence and trade-offs it rests on",
+ d:"A real case with incomplete information. Groups must reach a recommendation and name what they would need to know to be sure. Ambiguity is the teaching material.",
+ tags:["professional","judgement"]},
+{n:"Local case swap", m:20, mode:"apply", group:"small", max:120, fixed:true, tech:false, writes:true,
+ ev:"Student-sourced regional examples, and how well the theory actually fits them",
+ d:"Each student brings one example from their own community, parish or island. Groups test the week's framework against it and report where the framework fails. It usually does fail somewhere, and that is worth more than the cases in the textbook.",
+ tags:["Caribbean","local","transfer"]},
+{n:"Data interpretation sprint", m:18, mode:"apply", group:"pairs", max:0, fixed:true, tech:false, writes:true,
+ ev:"Written claims with the specific figures that support them",
+ d:"One table or chart, printed. Fifteen minutes to produce three defensible claims and one claim the data cannot support. Regional statistics beat generic ones here.",
+ tags:["quantitative","evidence"]},
+{n:"Rank and justify, diamond nine", m:15, mode:"active", group:"small", max:120, fixed:true, tech:false, writes:true,
+ ev:"The ranking plus the criteria they had to invent to produce it",
+ d:"Nine cards, ranked into a diamond by importance. The arguing is about the criteria, which is what you actually wanted them to think about.",
+ tags:["evaluation","priorities"]},
+{n:"Concept map on paper", m:15, mode:"active", group:"pairs", max:0, fixed:true, tech:false, writes:true,
+ ev:"The map, and specifically the labels they put on the connecting lines",
+ d:"Twelve terms, one sheet. Every line between two terms must be labelled with the relationship. Unlabelled lines are where the understanding is not there yet.",
+ tags:["synthesis","revision"]},
+{n:"Numbered heads together", m:12, mode:"check", group:"small", max:200, fixed:true, tech:false, writes:false,
+ ev:"An answer that any member of the group can defend, sampled at random",
+ d:"Number off within each group. Pose the question, groups confer until everyone can answer, then you call a number. Accountability without singling anyone out.",
+ tags:["large class","accountability"]},
+{n:"Board relay", m:12, mode:"active", group:"small", max:200, fixed:true, tech:false, writes:true,
+ ev:"Each row's working, visible and comparable across the room",
+ d:"Rows compete to complete steps of a problem at the board or on a shared sheet passed along the row. Loud, fast, and it works in a full theatre.",
+ tags:["large class","energy","fixed seats"]},
+{n:"Poster pitch, sixty seconds", m:22, mode:"apply", group:"small", max:120, fixed:false, tech:false, writes:true,
+ ev:"The poster and the discipline of a one-minute defensible claim",
+ d:"Groups build a poster on flipchart paper, then have exactly sixty seconds to pitch it. The time limit is what forces them to decide what matters.",
+ tags:["communication","synthesis"]},
+{n:"Peer review workshop", m:28, mode:"apply", group:"pairs", max:100, fixed:true, tech:false, writes:true,
+ ev:"Written feedback against the actual assessment criteria, from both directions",
+ d:"They bring a draft of the coming assessment. They swap and mark it against the real rubric. Reading someone else's weak draft teaches more than reading a model answer.",
+ tags:["assessment","feedback","writing"]},
+{n:"Role play or simulation", m:35, mode:"apply", group:"small", max:80, fixed:false, tech:false, writes:true,
+ ev:"Decisions made under the constraints of a role, and the debrief that follows",
+ d:"Assign stakeholder roles with genuinely conflicting interests and give them a decision to reach. The debrief afterwards is not optional; it is where the learning is.",
+ tags:["policy","professional","empathy"]},
+{n:"Think aloud modelling", m:10, mode:"input", group:"whole", max:0, fixed:true, tech:false, writes:false,
+ ev:"Their notes on your reasoning steps, which you can ask for",
+ d:"Solve or read something in front of them narrating every decision, including the wrong turns. Expert thinking is invisible until somebody says it out loud.",
+ tags:["modelling","expert practice"]},
+{n:"Guided notes", m:20, mode:"input", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Completed skeleton notes, which show you what was missed live",
+ d:"Hand out a skeleton of the input with the key relationships left blank. They complete it as you go. Attention stays up and you can collect them at the end.",
+ tags:["lecture","support","accessibility"]},
+{n:"Whip around", m:5, mode:"close", group:"whole", max:60, fixed:true, tech:false, writes:false,
+ ev:"One word or sentence from every person in the room",
+ d:"Round the room, one word or one sentence each, no repeats, no passing on the second circuit. It surfaces the range in the room in three minutes.",
+ tags:["closing","participation"]},
+{n:"Three, two, one", m:5, mode:"close", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Three things learned, two questions, one application, per student",
+ d:"Three things you learned, two questions you still have, one way you will use this. Fast to write, fast to read, and the ones column tells you if it transferred.",
+ tags:["closing","evidence","transfer"]},
+{n:"Brainstorm and cluster", m:15, mode:"open", group:"small", max:120, fixed:false, tech:false, writes:true,
+ ev:"The categories students generated, which reveal their existing mental model",
+ d:"Everything they associate with the topic onto slips, then group the slips and name the groups. Their categories tell you what you are teaching against.",
+ tags:["opening","prior knowledge"]},
+{n:"Reading quiz, low stakes", m:8, mode:"check", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"Who read, and which part of the reading defeated the room",
+ d:"Five questions, two marks in total, answerable only by someone who read. Low stakes and unmissable beats high stakes and occasional.",
+ tags:["reading","accountability"]},
+{n:"Fieldwork or placement debrief", m:25, mode:"active", group:"small", max:80, fixed:false, tech:false, writes:true,
+ ev:"Patterns across sites, and the theory that did or did not hold up",
+ d:"Students who saw different sites compare. The discipline is to move from anecdote to pattern to the framework the course gave them, in that order.",
+ tags:["practice","professional"]},
+{n:"Community voice panel", m:35, mode:"apply", group:"whole", max:150, fixed:true, tech:false, writes:true,
+ ev:"Student questions prepared in advance, and the written synthesis afterwards",
+ d:"Invite two or three people who live the issue. Students must submit questions beforehand, which you edit. The preparation is where most of the learning happens.",
+ tags:["Caribbean","community","authentic"]},
+{n:"Minute sketch", m:8, mode:"active", group:"individual", max:0, fixed:true, tech:false, writes:true,
+ ev:"A drawing of the process or relationship, which exposes gaps words hide",
+ d:"Draw the process, system or relationship in sixty seconds. No words allowed except labels. Students who can recite it and cannot draw it did not have it.",
+ tags:["visual","diagnostic"]},
+{n:"Backwards exam question", m:18, mode:"apply", group:"pairs", max:0, fixed:true, tech:false, writes:true,
+ ev:"Student-written exam questions plus their model answers and mark schemes",
+ d:"They write the exam question, the model answer and the mark scheme. To do it they have to know what a good answer looks like, which is the thing you wanted.",
+ tags:["assessment","metacognition"]}
+];
+
+/* ============================================================
+   Painting
+   ============================================================ */
+function completeness(w){
+  const checks = [
+    w.topic, w.question, w.objectives, w.readings,
+    (w.sequence||[]).some(a=>a.notes && a.notes.trim()) ? "y" : "",
+    (w.sequence||[]).some(a=>a.evidence && a.evidence.trim()) || w.exit ? "y" : "",
+    w.exit,
+    (w.personal.hook || w.personal.local || w.personal.adapt || w.personal.materials || w.personal.notes),
+    (w.after.notes || w.after.reflect || w.after.bridge || w.after.evidence)
+  ];
+  const done = checks.filter(x => x && String(x).trim()).length;
+  return Math.round(done / checks.length * 100);
+}
+function ring(pct, on){
+  const r = 10, c = 2*Math.PI*r, off = c*(1-pct/100);
+  const col = on ? "#1C6B5B" : "#9DB6AE";
+  return '<svg class="ring" viewBox="0 0 26 26" aria-hidden="true">'
+    + '<circle cx="13" cy="13" r="'+r+'" fill="none" stroke="#D9E2DC" stroke-width="3"/>'
+    + '<circle cx="13" cy="13" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="3" stroke-linecap="round" '
+    + 'stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 13 13)"/></svg>';
+}
+function paintRail(){
+  const list = $("weekList");
+  list.innerHTML = state.weeks.map((w,i)=>{
+    const on = (i+1)===state.selected;
+    const tp = w.topic && w.topic.trim() ? esc(w.topic) : '<span style="color:#8B9A95">Not planned yet</span>';
+    return '<button class="wk'+(on?" on":"")+'" data-week="'+(i+1)+'" type="button">'
+      + ring(completeness(w), on)
+      + '<span><span class="no">Week '+pad(i+1)+'</span><br><span class="tp">'+tp+'</span></span></button>';
+  }).join("");
+  list.querySelectorAll(".wk").forEach(b=>b.onclick=()=>selectWeek(+b.dataset.week));
+  const avg = Math.round(state.weeks.reduce((s,w)=>s+completeness(w),0)/state.weeks.length);
+  const ready = state.weeks.filter(planned).length;
+  $("railStat").textContent = ready + " of " + plural(state.weeks.length, "week") + " planned · " + avg + "% complete";
+  const scored = state.weeks.filter(w=>w.topic && w.topic.trim()).map(w=>analyse(w).score);
+  $("railQuality").textContent = scored.length
+    ? "Teaching quality " + Math.round(scored.reduce((a,b)=>a+b,0)/scored.length) + "% across planned weeks"
+    : "Quality score appears once a week has a topic";
+}
+function paintRibbon(){
+  const w = week();
+  const total = w.sequence.reduce((s,a)=>s+(a.min||0),0) || 1;
+  $("ribbon").innerHTML = w.sequence.map(a=>{
+    const m = MODES[a.mode] || MODES.input;
+    const pctv = (a.min||0)/total*100;
+    const label = pctv > 9 ? (a.min+"m") : "";
+    return '<div class="seg" style="width:'+pctv+'%;background:'+m.color+'" title="'+esc(a.title)+' — '+a.min+' min, '+m.label+'">'+label+'</div>';
+  }).join("");
+  $("legend").innerHTML = Object.keys(MODES).map(k=>'<span title="'+esc(MODES[k].blurb)+'"><i style="background:'+MODES[k].color+'"></i>'+MODES[k].label+'</span>').join("");
+  const mins = w.sequence.reduce((s,a)=>s+(a.min||0),0);
+  const target = state.course.minutes || 90;
+  const over = mins - target;
+  $("minuteCount").textContent = mins + " of " + target + " min" + (Math.abs(over) >= 5 ? (over>0 ? " · " + over + " over" : " · " + (-over) + " spare") : " · on time");
+}
+function paintActivities(){
+  const w = week();
+  $("activities").innerHTML = w.sequence.map((a,i)=>{
+    const opts = Object.keys(MODES).map(k=>'<option value="'+k+'"'+(a.mode===k?" selected":"")+'>'+MODES[k].label+'</option>').join("");
+    const gopts = Object.keys(GROUPS).map(k=>'<option value="'+k+'"'+(a.group===k?" selected":"")+'>'+GROUPS[k]+'</option>').join("");
+    const col = (MODES[a.mode]||MODES.input).color;
+    return '<div class="act" data-i="'+i+'" style="border-left-color:'+col+'">'
+      + '<div class="row1">'
+      + '<input class="t m" type="number" min="0" step="5" value="'+(a.min||0)+'" aria-label="Minutes">'
+      + '<input class="t ti" value="'+esc(a.title)+'" aria-label="What happens">'
+      + '<select class="t md" aria-label="Type of move">'+opts+'</select>'
+      + '<select class="t gp" aria-label="Grouping">'+gopts+'</select>'
+      + '<span class="mv noprint">'
+      + '<button class="iconbtn up" type="button" title="Move earlier" aria-label="Move earlier">&#8593;</button>'
+      + '<button class="iconbtn down" type="button" title="Move later" aria-label="Move later">&#8595;</button>'
+      + '<button class="iconbtn del" type="button" title="Remove" aria-label="Remove">&#215;</button></span>'
+      + '</div>'
+      + '<textarea class="t nt" style="margin-top:9px" placeholder="What you do, what students do, the prompt, how groups form" aria-label="Detail">'+esc(a.notes)+'</textarea>'
+      + '<div class="row2">'
+      + '<input class="t ev" value="'+esc(a.evidence)+'" placeholder="Evidence this produces: slips collected, board work, vote split, drafts&hellip;" aria-label="Evidence produced">'
+      + '<label class="techbox"><input type="checkbox" class="tc"'+(a.tech?" checked":"")+'> needs power or internet</label>'
+      + '</div>'
+      + '</div>';
+  }).join("");
+  $("activities").querySelectorAll(".act").forEach(el=>{
+    const i = +el.dataset.i;
+    el.querySelectorAll("input,textarea,select").forEach(x=>{
+      x.oninput = onEdit;
+      x.onchange = ()=>{ onEdit(); if (x.classList.contains("md")) paintActivities(); };
+    });
+    el.querySelector(".up").onclick = ()=>moveAct(i,-1);
+    el.querySelector(".down").onclick = ()=>moveAct(i,1);
+    el.querySelector(".del").onclick = ()=>{ readForm(); week().sequence.splice(i,1); paintActivities(); onEdit(); };
+  });
+}
+function moveAct(i,d){
+  readForm();
+  const s = week().sequence, j = i+d;
+  if (j<0 || j>=s.length) return;
+  const tmp = s[i]; s[i] = s[j]; s[j] = tmp;
+  paintActivities(); onEdit();
+}
+/* stretch or shrink the sequence to the real class length, in five-minute steps */
+function rebalance(){
+  readForm();
+  const w = week();
+  const target = state.course.minutes || 90;
+  const seq = w.sequence.filter(a=>a.min > 0);
+  if (!seq.length) { toast("Give the moves some minutes first"); return; }
+  const total = seq.reduce((s,a)=>s+a.min,0);
+  let running = 0;
+  seq.forEach((a,i)=>{
+    a.min = (i === seq.length-1) ? Math.max(0, target-running) : Math.max(5, Math.round(a.min*target/total/5)*5);
+    running += a.min;
+  });
+  w.sequence = seq;
+  paintActivities(); onEdit();
+  toast("Rebalanced to " + target + " minutes");
+}
+function badge(current, importedVal, restoreKey){
+  if (importedVal == null || importedVal === "") return '<span class="tag you">yours</span>';
+  if (String(current).trim() === String(importedVal).trim()) return '<span class="tag src">from outline</span>';
+  return '<span class="tag edit">edited</span> <button class="linkbtn noprint" type="button" data-restore="'+restoreKey+'">restore outline text</button>';
+}
+function paintBadges(){
+  const w = week(), im = w.imported;
+  $("badgeObj").innerHTML  = badge(w.objectives, im && im.objectives, "objectives");
+  $("badgeRead").innerHTML = badge(w.readings,   im && im.readings,   "readings");
+  $("badgeAss").innerHTML  = badge(w.assessment, im && im.assessment, "assessment");
+  $("frameBadges").innerHTML = im ? '<span class="tag src">imported '+esc(im.when||"")+'</span>' : '';
+  document.querySelectorAll("[data-restore]").forEach(b=>{
+    b.onclick = ()=>{
+      readForm();
+      const k = b.dataset.restore;
+      week()[k] = week().imported[k];
+      paintWeek(); toast("Outline text restored");
+      queueSave();
+    };
+  });
+  /* Bloom's strip under the objectives */
+  const bl = bloomsIn(w.objectives);
+  $("bloomStrip").innerHTML = bl.length
+    ? bl.map(b=> b.bloom
+        ? '<span class="bl" title="'+esc(b.line)+'">'+b.bloom.label+'</span>'
+        : '<span class="bl none" title="'+esc(b.line)+'">no action verb</span>').join("")
+    : "";
+}
+function paintQuality(){
+  const w = week();
+  const a = analyse(w);
+  $("qScore").textContent = (w.topic && w.topic.trim()) ? a.score + "%" : "—";
+  $("qVerdict").textContent = a.verdict;
+  $("qScore").style.color = a.score >= 85 ? "var(--leaf)" : a.score >= 70 ? "var(--leaf-deep)" : a.score >= 50 ? "var(--ochre)" : "var(--rust)";
+  $("qBars").innerHTML = a.bars.map(b=>
+    '<div class="qbar"><span>'+b.label+'</span>'
+    + '<span class="meter"><i style="width:'+clamp(b.pct,0,100)+'%;background:'+b.color+'"></i></span>'
+    + '<span class="stat" style="text-align:right">'+esc(b.note)+'</span></div>').join("");
+  const order = {bad:0, warn:1, ok:2};
+  const icons = {bad:"✕", warn:"!", ok:"✓"};
+  $("qChecks").innerHTML = a.checks.slice().sort((x,y)=>order[x.level]-order[y.level]).map(c=>
+    '<div class="check '+c.level+'"><span class="ic" aria-hidden="true">'+icons[c.level]+'</span>'
+    + '<span><span class="ttl">'+esc(c.title)+'</span>'
+    + (c.detail ? '<br><span class="dt">'+esc(c.detail)+'</span>' : '')+'</span></div>').join("");
+}
+function paintWeek(){
+  const w = week();
+  $("weekEyebrow").textContent = "Week " + pad(w.no) + " of " + pad(state.weeks.length);
+  FIELDS.forEach(([id,k])=> $(id).value = w[k] || "");
+  RFIELDS.forEach(([id,k])=> $(id).value = (w.room && w.room[k]) || "");
+  PFIELDS.forEach(([id,k])=> $(id).value = w.personal[k] || "");
+  AFIELDS.forEach(([id,k])=> $(id).value = w.after[k] || "");
+  $("wSeats").placeholder = "Course default: " + (state.course.size || 35);
+  paintActivities(); paintRibbon(); paintBadges(); paintQuality(); paintRail();
+}
+function paintCourse(){
+  $("courseTitle").value = state.course.title || "";
+  const bits = [state.course.code, state.course.term, state.course.level, state.course.institution, state.course.country].filter(Boolean);
+  $("courseMeta").textContent = bits.length ? bits.join(" · ") : "Add a course code, term and institution in Settings";
+  paintPicker();
+}
+function paintPicker(){
+  const p = $("coursePicker");
+  const rows = library.courses.length ? library.courses : [{id:state.id, title:state.course.title||"Untitled course"}];
+  p.innerHTML = rows.map(c=>{
+    const label = (c.code ? c.code + " · " : "") + (c.title || "Untitled course");
+    return '<option value="'+esc(c.id)+'"'+(c.id===state.id?" selected":"")+'>'+esc(label)+'</option>';
+  }).join("") + '<option value="__new">+ New course…</option>';
+}
+function paintCourseList(){
+  const rows = library.courses.slice().sort((a,b)=> (b.updated||"").localeCompare(a.updated||""));
+  $("courseList").innerHTML = rows.map(c=>{
+    const when = c.updated ? new Date(c.updated).toLocaleDateString() : "";
+    const meta = [c.code, c.term].filter(Boolean).join(" · ");
+    return '<div class="prow" style="grid-template-columns:1fr 160px 130px">'
+      + '<span><strong>'+esc(c.title||"Untitled course")+'</strong>'+(meta?'<br><span class="n">'+esc(meta)+'</span>':'')+'</span>'
+      + '<span class="meta">'+(c.weeks||0)+' weeks · '+esc(when)+'</span>'
+      + '<span style="text-align:right">'
+      + (c.id===state.id ? '<span class="tag src">editing</span>' : '<button class="linkbtn" type="button" data-open="'+esc(c.id)+'">open</button>')
+      + ' <button class="linkbtn" type="button" data-del="'+esc(c.id)+'" style="color:#A2402C">delete</button></span></div>';
+  }).join("") || '<div class="prow"><span class="hint">No courses yet. Name one below and create it.</span></div>';
+  $("courseList").querySelectorAll("[data-open]").forEach(b=> b.onclick = async ()=>{ await switchCourse(b.dataset.open); paintCourseList(); });
+  $("courseList").querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=> deleteCourse(b.dataset.del));
+}
+function selectWeek(n){
+  readForm(); state.selected = clamp(n,1,state.weeks.length); paintWeek(); queueSave();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ============================================================
+   The move library
+   ============================================================ */
+const LIB_FILTERS = [
+  {k:"fits",   label:"Fits my room and class", test:m => (!m.max || m.max >= seatsFor(week())) && (roomFor(week())!=="tiered" || m.fixed)},
+  {k:"notech", label:"No technology needed",   test:m => !m.tech},
+  {k:"large",  label:"Works with 100+",        test:m => !m.max || m.max >= 100},
+  {k:"short",  label:"Under 15 minutes",       test:m => m.m <= 15},
+  {k:"writes", label:"Leaves written evidence",test:m => m.writes},
+  {k:"local",  label:"Caribbean grounded",     test:m => (m.tags||[]).indexOf("Caribbean") > -1}
+];
+let libOn = {};
+function paintLibrary(){
+  $("libFilters").innerHTML = LIB_FILTERS.map(f=>
+    '<button class="chip'+(libOn[f.k]?" on":"")+'" type="button" data-f="'+f.k+'">'+f.label+'</button>').join("");
+  $("libFilters").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    libOn[b.dataset.f] = !libOn[b.dataset.f];
+    paintLibrary();
+  });
+  const q = ($("libSearch").value||"").toLowerCase().trim();
+  const rows = LIBRARY.filter(m=>{
+    for (const f of LIB_FILTERS) if (libOn[f.k] && !f.test(m)) return false;
+    if (!q) return true;
+    return (m.n + " " + m.d + " " + m.ev + " " + (m.tags||[]).join(" ")).toLowerCase().indexOf(q) > -1;
+  });
+  $("libList").innerHTML = rows.map((m)=>{
+    const i = LIBRARY.indexOf(m);
+    const mode = MODES[m.mode] || MODES.active;
+    const flags = [
+      '<span class="tag src">'+mode.label+'</span>',
+      '<span class="tag you">'+m.m+' min</span>',
+      '<span class="tag you">'+GROUPS[m.group]+'</span>',
+      m.tech ? '<span class="tag bad">needs tech</span>' : '<span class="tag sea">no tech</span>',
+      m.max ? '<span class="tag you">up to '+m.max+'</span>' : '<span class="tag sea">any size</span>',
+      m.fixed ? '' : '<span class="tag edit">needs movable seats</span>'
+    ].filter(Boolean).join(" ");
+    return '<div class="move">'
+      + '<div class="mh"><h5>'+esc(m.n)+'</h5><button class="btn small" type="button" data-add="'+i+'">Insert</button></div>'
+      + '<p class="md">'+esc(m.d)+'</p>'
+      + '<p class="md"><strong>Evidence:</strong> '+esc(m.ev)+'</p>'
+      + '<div class="mt">'+flags+'</div></div>';
+  }).join("") || '<p class="hint" style="padding:14px">Nothing matches those filters. Turn one off.</p>';
+  $("libStatus").textContent = rows.length + " of " + LIBRARY.length + " moves shown · room set to "
+    + (ROOMS[roomFor(week())]||"").toLowerCase() + ", " + seatsFor(week()) + " students";
+  $("libList").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>insertMove(+b.dataset.add));
+}
+function insertMove(i){
+  const m = LIBRARY[i];
+  readForm();
+  const w = week();
+  const closeIdx = w.sequence.findIndex(a=>a.mode==="close");
+  const item = {min:m.m, title:m.n, mode:m.mode, group:m.group, notes:m.d, evidence:m.ev, tech:!!m.tech};
+  if (m.mode === "close" || closeIdx < 0) w.sequence.push(item);
+  else w.sequence.splice(closeIdx, 0, item);
+  paintActivities(); onEdit();
+  toast('"' + m.n + '" added to week ' + pad(w.no) + '. Rebalance if you are now over time.');
+}
+
+/* ============================================================
+   Course-level view
+   ============================================================ */
+function paintDash(){
+  const ws = state.weeks;
+  const target = state.course.minutes || 90;
+  $("dashTitle").textContent = (state.course.title || "Course view") + " · " + plural(ws.length, "week");
+
+  const profiles = ws.map(timeProfile);
+  const scores = ws.map(w => (w.topic||"").trim() ? analyse(w).score : null);
+  const maxMin = Math.max(target, ...profiles.map(p=>p.total)) || target;
+
+  const stack = '<div class="bars">' + profiles.map((p,i)=>{
+    const h = v => (v/maxMin*94).toFixed(1) + "px";
+    return '<div class="col" title="Week '+(i+1)+': '+p.work+' min working, '+p.listen+' min listening, '+p.frame+' min framing">'
+      + '<div class="b" style="height:'+h(p.frame)+';background:'+MODES.close.color+'"></div>'
+      + '<div class="b" style="height:'+h(p.listen)+';background:'+MODES.input.color+'"></div>'
+      + '<div class="b" style="height:'+h(p.work)+';background:'+MODES.active.color+'"></div>'
+      + '</div>';
+  }).join("") + '</div><div class="xlabels">' + ws.map((w,i)=>'<span>'+(i+1)+'</span>').join("") + '</div>';
+
+  const scoreBars = '<div class="bars">' + scores.map((s,i)=>{
+    const col = s == null ? "#D9E2DC" : s >= 85 ? MODES.open.color : s >= 70 ? MODES.check.color : s >= 50 ? "#C79A4E" : "#A2402C";
+    return '<div class="col" title="Week '+(i+1)+': '+(s==null?"not planned":s+"%")+'">'
+      + '<div class="b" style="height:'+((s==null?4:s)/100*94).toFixed(1)+'px;background:'+col+'"></div></div>';
+  }).join("") + '</div><div class="xlabels">' + ws.map((w,i)=>'<span>'+(i+1)+'</span>').join("") + '</div>';
+
+  /* Bloom's across the whole course */
+  const counts = {};
+  BLOOM.forEach(b=>counts[b.key]=0);
+  let noVerb = 0, totalObj = 0;
+  ws.forEach(w => bloomsIn(w.objectives).forEach(o=>{ totalObj++; if (o.bloom) counts[o.bloom.key]++; else noVerb++; }));
+  const maxB = Math.max(1, ...Object.values(counts));
+  const bloomBars = BLOOM.map(b=>
+    '<div class="hbar"><span>'+b.label+'</span><span class="track"><i style="width:'+(counts[b.key]/maxB*100).toFixed(0)+'%"></i></span>'
+    + '<span class="n">'+counts[b.key]+'</span></div>').join("")
+    + (noVerb ? '<div class="hbar"><span style="color:var(--rust)">No verb</span><span class="track"><i style="width:'+(noVerb/maxB*100).toFixed(0)+'%;background:var(--rust)"></i></span><span class="n">'+noVerb+'</span></div>' : "");
+  const higher = counts.apply + counts.analyse + counts.evaluate + counts.create;
+  const bloomNote = !totalObj ? "No objectives written yet."
+    : Math.round(higher/totalObj*100) + "% of objectives sit at apply level or above."
+      + (higher/totalObj < 0.5 ? " A programme that mostly asks students to explain things produces graduates who can explain things." : "");
+
+  /* assessment load */
+  const load = ws.map(w=>lines(w.assessment).length);
+  const maxL = Math.max(1, ...load);
+  const loadBars = '<div class="bars">' + load.map((n,i)=>
+    '<div class="col" title="Week '+(i+1)+': '+n+' assessment item'+(n===1?"":"s")+'">'
+    + '<div class="b" style="height:'+(n/maxL*94).toFixed(1)+'px;background:'+(n>=3?"#A2402C":n===2?"#C79A4E":MODES.check.color)+'"></div></div>').join("")
+    + '</div><div class="xlabels">' + ws.map((w,i)=>'<span>'+(i+1)+'</span>').join("") + '</div>';
+  const pileups = load.map((n,i)=>({n,i})).filter(x=>x.n>=3).map(x=>"week "+(x.i+1));
+  const loadNote = pileups.length
+    ? "Three or more items land in " + pileups.join(", ") + ". Students feel that as one bad fortnight, not as several courses."
+    : (load.reduce((a,b)=>a+b,0) ? "Assessment is spread across the term." : "No assessment items recorded yet.");
+
+  /* readings */
+  const reads = ws.map(w=>lines(w.readings).length);
+  const maxR = Math.max(1, ...reads);
+  const readBars = '<div class="bars">' + reads.map((n,i)=>
+    '<div class="col" title="Week '+(i+1)+': '+n+' reading'+(n===1?"":"s")+'">'
+    + '<div class="b" style="height:'+(n/maxR*94).toFixed(1)+'px;background:'+MODES.open.color+'"></div></div>').join("")
+    + '</div><div class="xlabels">' + ws.map((w,i)=>'<span>'+(i+1)+'</span>').join("") + '</div>';
+
+  /* headline numbers */
+  const totalMin = profiles.reduce((s,p)=>s+p.total,0);
+  const workMin = profiles.reduce((s,p)=>s+p.work,0);
+  const listenMin = profiles.reduce((s,p)=>s+p.listen,0);
+  const done = scores.filter(s=>s!=null);
+  const avgScore = done.length ? Math.round(done.reduce((a,b)=>a+b,0)/done.length) : 0;
+  const evidenceWeeks = ws.filter(w=>(w.exit||"").trim() || (w.sequence||[]).some(a=>(a.evidence||"").trim())).length;
+  const localWeeks = ws.filter(w=>(w.personal.local||"").trim()).length;
+  const reflectedWeeks = ws.filter(w=>(w.after.reflect||"").trim()).length;
+
+  const tile = (big, label, note) =>
+    '<div class="panel"><div class="bignum" style="font-size:30px">'+big+'</div>'
+    + '<h5 style="margin-top:4px">'+label+'</h5><p class="sublabel">'+note+'</p></div>';
+
+  $("dashBody").innerHTML =
+    '<div class="dashgrid">'
+    + tile(avgScore + "%", "Average teaching quality", done.length + " of " + ws.length + " weeks planned")
+    + tile((totalMin ? Math.round(workMin/totalMin*100) : 0) + "%", "Of contact time, students working",
+           workMin + " minutes across the term against " + listenMin + " minutes of transmission")
+    + tile(evidenceWeeks + "/" + ws.length, "Weeks that collect evidence", "Exit tickets or named outputs from a task")
+    + tile(localWeeks + "/" + ws.length, "Weeks with a local example", "Regional cases in your personal layer")
+    + '</div>'
+    + '<div class="dashgrid">'
+    + '<div class="panel"><h5>Where the time goes, week by week</h5>'
+      + '<p class="sublabel">Ochre is students working, pale is you talking, grey is opening and closing.</p>'+stack+'</div>'
+    + '<div class="panel"><h5>Teaching quality by week</h5>'
+      + '<p class="sublabel">Grey stubs are weeks with no topic yet.</p>'+scoreBars+'</div>'
+    + '<div class="panel"><h5>Levels of thinking asked for</h5><p class="sublabel">'+esc(bloomNote)+'</p>'+bloomBars+'</div>'
+    + '<div class="panel"><h5>Assessment load</h5><p class="sublabel">'+esc(loadNote)+'</p>'+loadBars+'</div>'
+    + '<div class="panel"><h5>Reading load</h5><p class="sublabel">Items listed per week. Spikes are where students quietly stop reading.</p>'+readBars+'</div>'
+    + '<div class="panel"><h5>Reflection captured</h5><p class="sublabel">'+reflectedWeeks+' of '+ws.length+' weeks have an after-class reflection. This is the single thing that makes next year\'s course better than this one, and the first thing a review panel asks to see.</p>'
+      + '<div class="hbar"><span>Reflected</span><span class="track"><i style="width:'+Math.round(reflectedWeeks/ws.length*100)+'%"></i></span><span class="n">'+Math.round(reflectedWeeks/ws.length*100)+'%</span></div></div>'
+    + '</div>';
+}
+
+const QHELP = [
+  ["Constructive alignment","Every objective you write is matched against what actually happens in the room: the moves, the exit ticket, the essential question. An objective nothing touches is flagged as orphaned. This is the core of what UCJ, ACTT, BAC and every other reviewer means by alignment, and it is checked here on your machine rather than argued about in a meeting."],
+  ["Bloom's level","The first verb of each objective is read against the revised taxonomy. A week whose highest level is remember or understand is flagged, because students can pass that week without being able to use any of it."],
+  ["Time on task","Minutes are added up by the kind of move. Students working should clear 45% of contact time and transmission should stay under a third. Any single unbroken input block over twenty minutes is flagged separately, because that is roughly where continuous attention gives out."],
+  ["Evidence of learning","Each move can name what it produces, and the exit ticket counts as one. Fewer than three collection points in a session is flagged: without them you leave with an impression rather than a finding, and you have nothing to show a review."],
+  ["The real room","Your class size, room type and how reliable the technology is are all taken into account. Small-group work in fixed tiered seating is flagged unless you have said how groups form. A session that leans on a projector you cannot count on is flagged unless you have written the fallback."],
+  ["Inclusion and locality","Adjustments for the actual group in front of you, and at least one local or regional example, are both checked. A course taught entirely from imported cases teaches students that the important examples happen somewhere else."]
+];
+
+/* ============================================================
+   Importing an outline
+   ============================================================ */
+async function extractText(file){
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".docx")) {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+    if (!window.mammoth) throw new Error("Word reader could not load. Paste the text instead.");
+    const buf = await file.arrayBuffer();
+    const res = await window.mammoth.extractRawText({arrayBuffer:buf});
+    return res.value;
+  }
+  if (name.endsWith(".pdf")) {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+    if (!window.pdfjsLib) throw new Error("PDF reader could not load. Paste the text instead.");
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const buf = await file.arrayBuffer();
+    const doc = await window.pdfjsLib.getDocument({data:buf}).promise;
+    let out = "";
+    for (let p=1; p<=doc.numPages; p++){
+      const page = await doc.getPage(p);
+      const c = await page.getTextContent();
+      out += c.items.map(i=>i.str).join(" ") + "\n\n";
+    }
+    return out;
+  }
+  return await file.text();
+}
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    if ([...document.scripts].some(s=>s.src===src)) return resolve();
+    const s = document.createElement("script");
+    s.src = src; s.onload = ()=>resolve(); s.onerror = ()=>reject(new Error("Could not load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+const WEEK_RE = /^\s*(?:week|unit|module|session|topic|class|lesson)\s*[:.\-]?\s*(\d{1,2})\b[:.\-\s]*(.*)$/i;
+function segment(text){
+  const src = text.replace(/\r/g,"").split("\n");
+  const segs = []; let cur = null;
+  src.forEach(line=>{
+    const m = line.match(WEEK_RE);
+    if (m) {
+      cur = {no: parseInt(m[1],10), heading: (m[2]||"").trim(), body: []};
+      segs.push(cur);
+    } else if (cur) {
+      cur.body.push(line);
+    }
+  });
+  return segs.map(s=>({no:s.no, heading:s.heading, body:s.body.join("\n").trim()}))
+             .filter(s=>s.heading || s.body);
+}
+const LABEL_RE = /^\s*(?:learning|required|core|key|essential|suggested|recommended|primary|weekly|set)?\s*(objectives?|outcomes?|aims?|readings?|resources?|texts?|materials?|assessments?|assignments?|deliverables?|tasks?|activities|topics?|focus|overview|description|questions?)\s*[:\-–]\s*(.*)$/i;
+function classify(word){
+  const w = word.toLowerCase();
+  if (/objectiv|outcome|aim/.test(w)) return "objectives";
+  if (/read|resource|text|material/.test(w)) return "readings";
+  if (/assess|assign|deliver|task/.test(w)) return "assessment";
+  if (/question/.test(w)) return "question";
+  return null;
+}
+function patternParse(seg){
+  const buckets = {objectives:[], readings:[], assessment:[], question:[]};
+  let cur = null;
+  (seg.body||"").split("\n").forEach(line=>{
+    const m = line.match(LABEL_RE);
+    if (m) {
+      cur = classify(m[1]);
+      const rest = (m[2]||"").trim();
+      if (cur && rest) buckets[cur].push(rest);
+      return;
+    }
+    const b = line.replace(/^\s*[-•*•–]+\s*|^\s*\d{1,2}[.)]\s+/,"").trim();
+    if (!b) { cur = null; return; }
+    if (cur) buckets[cur].push(b);
+  });
+  return {
+    topic: seg.heading || firstMeaningful(seg.body) || "",
+    question: buckets.question.join(" "),
+    objectives: buckets.objectives.join("\n"),
+    readings: buckets.readings.join("\n"),
+    assessment: buckets.assessment.join("\n")
+  };
+}
+function firstMeaningful(body){
+  const ls = (body||"").split("\n").map(s=>s.trim()).filter(Boolean);
+  for (const l of ls) {
+    const m = l.match(/^(?:topic|focus|theme|overview|title)\s*[:\-–]\s*(.+)$/i);
+    if (m) return m[1].slice(0,120);
+  }
+  const first = ls[0] || "";
+  return first.replace(/^[-•*•]\s*/,"").slice(0,120);
+}
+
+/* ============================================================
+   Talking to Claude
+   Deployed, calls go to /api/claude and the key lives on the server.
+   Opened as a local file, it falls back to a direct call with the key
+   from Settings.
+   ============================================================ */
+async function callClaude(system, prompt, maxTokens){
+  const body = JSON.stringify({
+    model:"claude-sonnet-4-6",
+    max_tokens: maxTokens || 1000,
+    system: system,
+    messages:[{role:"user", content: prompt}]
+  });
+  let data = null, serverSaid = "";
+
+  if (typeof location !== "undefined" && /^https?:/.test(location.protocol)) {
+    try {
+      const r = await fetch("/api/claude", {method:"POST", headers:{"Content-Type":"application/json"}, body});
+      const ct = r.headers.get("content-type") || "";
+      if (r.ok && ct.indexOf("json") > -1) {
+        data = await r.json();
+      } else if (ct.indexOf("json") > -1) {
+        const j = await r.json().catch(()=>({}));
+        serverSaid = j.error || "";
+      }
+    } catch(e) { /* no proxy here, try direct */ }
+  }
+
+  if (!data) {
+    const headers = {"Content-Type":"application/json"};
+    const k = (library.settings.apiKey||"").trim();
+    if (k) {
+      headers["x-api-key"] = k;
+      headers["anthropic-version"] = "2023-06-01";
+      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    }
+    let res;
+    try { res = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers, body}); }
+    catch(e) { throw new Error(serverSaid || "Claude could not be reached from here"); }
+    if (!res.ok) throw new Error(serverSaid || ("Claude is not reachable from here (" + res.status + ")"));
+    data = await res.json();
+  }
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+}
+function parseJSONish(txt){
+  let t = String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a > 0 || b < t.length-1) { if (a>=0 && b>a) t = t.slice(a,b+1); }
+  return JSON.parse(t);
+}
+
+/* the setting every prompt is written into */
+function contextBlock(w, opts){
+  opts = opts || {};
+  const c = state.course;
+  const seats = w ? seatsFor(w) : (c.size||35);
+  const room = w ? roomFor(w) : (c.room||"flat");
+  const out = [
+    "Course: " + (c.title||"untitled") + (c.code ? " (" + c.code + ")" : ""),
+    c.level ? "Level: " + c.level : "",
+    c.institution ? "Institution: " + c.institution : "",
+    c.country ? "Country: " + c.country : "",
+    "Mode: face to face, on campus.",
+    "Class length: " + (c.minutes||90) + " minutes.",
+    "Class size: about " + seats + " students.",
+    "Room: " + (ROOMS[room]||room) + ".",
+    "Technology: " + (TECHS[c.tech]||"unknown") + "."
+  ];
+  if (opts.lowTech) out.push("Assume NO projector, NO internet and no printing beyond a single handout. Board and paper only.");
+  if (c.plos && c.plos.trim()) out.push("Programme learning outcomes this course serves:\n" + c.plos.trim());
+  return out.filter(Boolean).join("\n");
+}
+const CARIB_RULE = "The students are in the Caribbean. Use Caribbean examples, cases, institutions, policy and data wherever an example is needed: "
+  + "the specific country named above first, then the wider Caribbean and CARICOM, then the global South, and only then North America or Europe. "
+  + "Do not name a source, statistic, author or case unless you are confident it is real; describe the kind of example to use instead and let the lecturer supply it. "
+  + "Never invent citations, dates or figures.";
+
+const STRUCT_SYSTEM = "You turn one week of a university course outline into planning fields. "
+  + "Return ONLY a JSON object, no preamble and no code fences, with keys: "
+  + "topic (short string), question (one essential question the week answers), "
+  + "objectives (array of short strings, each beginning with an action verb), readings (array of strings), assessment (array of strings). "
+  + "Use only what the text supports. Leave an array empty rather than inventing content. "
+  + "Keep the author's own wording for readings and assessments.";
+
+async function structureSegment(seg){
+  const txt = ("Week " + seg.no + ": " + (seg.heading||"") + "\n" + (seg.body||"")).slice(0,4000);
+  const out = await callClaude(STRUCT_SYSTEM, txt, 900);
+  const j = parseJSONish(out);
+  const arr = v => Array.isArray(v) ? v.filter(Boolean).join("\n") : (v||"");
+  return {
+    topic: (j.topic||seg.heading||"").trim(),
+    question: (j.question||"").trim(),
+    objectives: arr(j.objectives),
+    readings: arr(j.readings),
+    assessment: arr(j.assessment)
+  };
+}
+const SPLIT_SYSTEM = "You read a course outline that has no clear week headings and propose a weekly sequence. "
+  + "Return ONLY a JSON object, no code fences: {\"weeks\":[{\"no\":1,\"topic\":\"...\"}]}. "
+  + "Use the outline's own topics in their given order. Do not invent extra content.";
+
+async function readOutline(){
+  const useAI = $("useAI").checked;
+  const status = $("importStatus"), bar = $("bar"), fill = bar.querySelector("i");
+  status.className = "status"; status.textContent = "Reading…";
+  bar.classList.add("on"); fill.style.width = "6%";
+  $("btnApply").disabled = true;
+
+  try {
+    if (!rawText.trim()) rawText = $("pasteText").value;
+    if (!rawText.trim()) throw new Error("Add a file or paste the outline text first.");
+
+    let segs = segment(rawText);
+    let results = [];
+
+    if (!segs.length) {
+      if (useAI) {
+        status.textContent = "No week headings found. Asking Claude to propose a sequence…";
+        const out = await callClaude(SPLIT_SYSTEM, rawText.slice(0,6000), 1000);
+        const j = parseJSONish(out);
+        results = (j.weeks||[]).map((w,i)=>({no:w.no||i+1, topic:w.topic||"", question:"", objectives:"", readings:"", assessment:"", how:"claude"}));
+      }
+      if (!results.length) throw new Error("No weeks found. Label sections as Week 1, Unit 1, or Module 1, then read again.");
+    } else {
+      for (let i=0;i<segs.length;i++){
+        const seg = segs[i];
+        let row = patternParse(seg); row.how = "pattern";
+        if (useAI && $("useAI").checked) {
+          status.textContent = "Structuring week " + seg.no + " of " + segs.length + "…";
+          try { row = Object.assign(row, await structureSegment(seg), {how:"claude"}); }
+          catch(e){ status.textContent = "Claude unavailable, reading by pattern instead…"; $("useAI").checked = false; }
+        }
+        row.no = seg.no || (i+1);
+        results.push(row);
+        fill.style.width = (8 + 88*(i+1)/segs.length) + "%";
+      }
+    }
+
+    results.sort((a,b)=>a.no-b.no);
+    results.forEach((r,i)=>r.no=i+1);
+    staged = results;
+    fill.style.width = "100%";
+    status.textContent = plural(results.length, "week") + " read. Check them, then build.";
+    showPreview(results);
+    $("btnApply").disabled = false;
+  } catch(err){
+    status.className = "status bad";
+    status.textContent = err.message || String(err);
+    bar.classList.remove("on");
+  }
+}
+function showPreview(rows){
+  const p = $("preview");
+  p.style.display = "block";
+  p.innerHTML = rows.map(r=>{
+    const counts = [];
+    if (r.objectives) counts.push(lines(r.objectives).length + " obj");
+    if (r.readings) counts.push(lines(r.readings).length + " read");
+    if (r.assessment) counts.push("assessment");
+    return '<div class="prow"><span class="n">W'+pad(r.no)+'</span><span>'+esc(r.topic||"Untitled")+'</span>'
+      + '<span class="meta">'+(counts.join(" · ")||"topic only")+'</span></div>';
+  }).join("");
+}
+function applyImport(){
+  if (!staged) return;
+  const keep = $("keepExisting").checked;
+  const when = new Date().toLocaleDateString();
+  const old = state.weeks;
+  state.weeks = staged.map((r,i)=>{
+    const prev = old[i];
+    const w = blankWeek(i+1, state.course.minutes);
+    if (keep && prev) {
+      w.personal = prev.personal;
+      w.after = prev.after;
+      w.room = prev.room;
+      w.exit = prev.exit;
+      w.concepts = prev.concepts;
+      if (prev.sequence && prev.sequence.some(a=>a.notes)) w.sequence = prev.sequence;
+    }
+    w.topic = r.topic || "";
+    w.question = r.question || (keep && prev ? prev.question : "");
+    w.objectives = r.objectives || "";
+    w.readings = r.readings || "";
+    w.assessment = r.assessment || "";
+    w.imported = {topic:w.topic, question:w.question, objectives:w.objectives, readings:w.readings, assessment:w.assessment, when:when};
+    return w;
+  });
+  state.selected = 1;
+  staged = null; rawText = "";
+  closeAll();
+  paintCourse(); paintWeek(); save();
+  toast(plural(state.weeks.length, "week") + " built. Your layer and your room notes are untouched.");
+}
+
+/* ============================================================
+   Drafting a week
+   ============================================================ */
+const PLAN_SYSTEM = "You are an experienced university teaching consultant designing ONE face-to-face class session. "
+  + "Return ONLY a JSON object, no preamble and no code fences, with keys: "
+  + "question (one essential, genuinely arguable question ending in a question mark), "
+  + "objectives (array of 3 to 5 short statements, each beginning with an action verb, at least two of them at apply, analyse, evaluate or create level), "
+  + "concepts (one or two sentences naming what students typically get wrong here and the check that surfaces it), "
+  + "sequence (array of objects with min (integer minutes), title (short), mode (one of open, input, active, apply, check, close), "
+  + "group (one of whole, pairs, small, individual, circulate), "
+  + "notes (at most three sentences: what the lecturer does, what students do, and how groups form), "
+  + "evidence (the concrete artefact or observation this move produces, e.g. 'slips collected', 'vote split before and after')), "
+  + "exit (one short exit ticket task that produces a written answer), "
+  + "fallback (two sentences: how to run this same session with no projector, no internet and no printing). "
+  + "Hard rules: the minutes in sequence must add up to exactly the class length given. "
+  + "Students must be working, not listening, for at least half the minutes. No single input block may exceed 15 minutes. "
+  + "The session must open deliberately and close with evidence collected. "
+  + "Every move must be physically possible in the room and at the class size given. "
+  + "Every objective must be practised by at least one move. "
+  + "Use the readings and objectives supplied; do not invent sources, authors, statistics or citations. "
+  + "If the lecturer has supplied a hook or local examples, design around them rather than replacing them.";
+
+const STYLES = {
+  active:"Mixed active learning: pairs, small groups, and individual work.",
+  discussion:"Seminar style: structured discussion, text-based argument, whole-group synthesis.",
+  problem:"Problem-based: students work real cases or problems for most of the class.",
+  studio:"Studio or workshop: students build, draft, or make something during the session.",
+  flipped:"Flipped: readings done beforehand, class time spent applying and troubleshooting.",
+  lecturehall:"Large lecture hall with fixed tiered seats: use only moves that survive scale — voting, pairs along a row, numbered heads, written slips, board relay. Never assume students can move around."
+};
+function planPrompt(w, context, style, opts){
+  const p = w.personal || {};
+  const r = w.room || {};
+  return [
+    contextBlock(w, opts),
+    "Approach: " + (STYLES[style] || STYLES.active),
+    "",
+    "Week " + w.no + " topic: " + (w.topic || "not set"),
+    w.question ? "Existing essential question: " + w.question : "",
+    w.objectives ? "Objectives from the outline:\n" + w.objectives : "No objectives given; propose them from the topic.",
+    w.readings ? "Readings:\n" + w.readings : "",
+    w.assessment ? "Assessment in play: " + w.assessment : "",
+    w.concepts ? "Known sticking points: " + w.concepts : "",
+    r.groups ? "How groups are formed in this room: " + r.groups : "",
+    p.hook ? "Lecturer's planned hook: " + p.hook : "",
+    p.local ? "Local examples the lecturer wants used: " + p.local : "",
+    p.adapt ? "Adjustments needed for this group: " + p.adapt : "",
+    context ? "Also: " + context : "",
+    opts && opts.local ? "\n" + CARIB_RULE : ""
+  ].filter(Boolean).join("\n");
+}
+function normalizePlan(j, target){
+  const arr = v => Array.isArray(v) ? v.filter(Boolean).map(x=>String(x).trim()).join("\n") : String(v||"").trim();
+  let seq = Array.isArray(j.sequence) ? j.sequence.map(a=>({
+    min: Math.max(0, Math.round(Number(a.min)||0)),
+    title: String(a.title||"Untitled move").trim(),
+    mode: MODES[a.mode] ? a.mode : "active",
+    group: GROUPS[a.group] ? a.group : "whole",
+    notes: String(a.notes||"").trim(),
+    evidence: String(a.evidence||"").trim(),
+    tech: false
+  })).filter(a=>a.title) : [];
+  const total = seq.reduce((s,a)=>s+a.min,0);
+  if (seq.length && total && Math.abs(total-target) > 1) {
+    let running = 0;
+    seq = seq.map((a,i)=>{
+      const m = i === seq.length-1 ? Math.max(0, target-running) : Math.max(5, Math.round(a.min*target/total/5)*5);
+      running += m;
+      return Object.assign({}, a, {min: m});
+    });
+  }
+  return {
+    question: String(j.question||"").trim(),
+    objectives: arr(j.objectives),
+    concepts: String(j.concepts||"").trim(),
+    sequence: seq,
+    exit: String(j.exit||"").trim(),
+    fallback: String(j.fallback||"").trim()
+  };
+}
+async function draftWeek(w, context, style, opts){
+  const target = state.course.minutes || 90;
+  const out = await callClaude(PLAN_SYSTEM, planPrompt(w, context, style, opts), 1400);
+  return normalizePlan(parseJSONish(out), target);
+}
+let draft = null;
+function paintDraft(p){
+  const rows = p.sequence.map(a=>
+    '<div class="prow" style="grid-template-columns:52px 1fr"><span class="n">'+a.min+'m</span>'
+    + '<span><strong>'+esc(a.title)+'</strong> <span class="tag you">'+esc((MODES[a.mode]||{}).label||"")+'</span> <span class="tag sea">'+esc(GROUPS[a.group]||"")+'</span>'
+    + (a.notes ? '<br><span style="font-size:12.5px;color:#63756F">'+esc(a.notes)+'</span>' : "")
+    + (a.evidence ? '<br><span style="font-size:12px;color:#134A3F">Evidence: '+esc(a.evidence)+'</span>' : "")
+    + '</span></div>').join("");
+  const bl = (t,v)=> v ? '<p style="margin:10px 0 2px"><strong>'+t+'</strong><br>'+esc(v).replace(/\n/g,"<br>")+'</p>' : "";
+  const mins = p.sequence.reduce((s,a)=>s+a.min,0);
+  const work = p.sequence.filter(a=>(MODES[a.mode]||{}).kind==="work").reduce((s,a)=>s+a.min,0);
+  $("planPreview").style.display = "block";
+  $("planPreview").innerHTML = bl("Essential question", p.question) + bl("Objectives", p.objectives)
+    + bl("Watch for", p.concepts)
+    + '<p style="margin:12px 0 2px"><strong>Class sequence</strong> <span class="n">'+mins+' minutes, '+(mins?Math.round(work/mins*100):0)+'% students working</span></p>' + rows
+    + bl("Exit ticket", p.exit) + bl("If the technology fails", p.fallback);
+}
+function applyDraft(p){
+  const parts = [...document.querySelectorAll(".planPart")].filter(c=>c.checked).map(c=>c.value);
+  readForm();
+  const w = week();
+  if (parts.includes("question") && p.question) w.question = p.question;
+  if (parts.includes("objectives") && p.objectives) w.objectives = p.objectives;
+  if (parts.includes("concepts") && p.concepts) w.concepts = p.concepts;
+  if (parts.includes("exit") && p.exit) w.exit = p.exit;
+  if (parts.includes("sequence") && p.sequence.length) w.sequence = p.sequence;
+  if (parts.includes("fallback") && p.fallback) w.room.fallback = p.fallback;
+  paintWeek(); save(); closeAll();
+  toast("Draft applied to week " + pad(w.no) + ". Your layer is untouched. Read the quality check before you teach it.");
+}
+function unplanned(w){
+  return (w.topic && w.topic.trim()) && !(w.sequence||[]).some(a=>a.notes && a.notes.trim());
+}
+async function draftAllEmpty(){
+  readForm();
+  const targets = state.weeks.filter(unplanned);
+  const st = $("planStatus"), bar = $("planBar"), fill = bar.querySelector("i");
+  st.className = "status";
+  if (!targets.length) { st.textContent = "Every week with a topic already has a plan. Nothing to draft."; return; }
+  if (!confirm("Draft " + plural(targets.length, "unplanned week") + "? Existing plans, your layer and your room notes are left alone.")) return;
+  bar.classList.add("on");
+  const context = $("planContext").value, style = $("planStyle").value;
+  const opts = {local: $("planLocal").checked, lowTech: $("planLowTech").checked};
+  let done = 0, failed = 0;
+  for (const w of targets) {
+    st.textContent = "Drafting week " + pad(w.no) + " — " + (done+failed+1) + " of " + targets.length + "…";
+    try {
+      const p = await draftWeek(w, context, style, opts);
+      if (!w.question && p.question) w.question = p.question;
+      if (!w.objectives && p.objectives) w.objectives = p.objectives;
+      if (!w.concepts && p.concepts) w.concepts = p.concepts;
+      if (!w.exit && p.exit) w.exit = p.exit;
+      if (!w.room.fallback && p.fallback) w.room.fallback = p.fallback;
+      if (p.sequence.length) w.sequence = p.sequence;
+      done++;
+    } catch(e) { failed++; }
+    fill.style.width = ((done+failed)/targets.length*100) + "%";
+    await save();
+    paintRail();
+  }
+  paintWeek();
+  st.textContent = plural(done, "week") + " drafted" + (failed ? ", " + failed + " could not be reached" : "") + ". Read each one before you teach it.";
+}
+
+/* ============================================================
+   The coach
+   ============================================================ */
+const COACH_SYSTEM = "You are an experienced university teaching consultant working with a lecturer on one week of their face-to-face course. "
+  + "Be concrete and brief. Offer 3 to 5 options as short labelled bullets with a suggested number of minutes for each, "
+  + "and state what evidence of learning each one produces and how it behaves at the class size given. "
+  + "No preamble, no closing pep talk, no headings. Plain sentences. "
+  + "Do not invent sources, statistics, authors or citations.";
+
+async function runCoach(){
+  const w = week();
+  const bar = $("coachBar"), fill = bar.querySelector("i"), st = $("coachStatus");
+  st.className = "status"; st.textContent = "Thinking…"; bar.classList.add("on"); fill.style.width="40%";
+  $("btnCoachRun").disabled = true;
+  const asks = {
+    activities:"Suggest active-learning moves for this class.",
+    questions:"Suggest a sharper essential question and the discussion prompts that follow from it.",
+    exit:"Suggest exit tickets and quick checks for understanding.",
+    misconceptions:"Name the likely student misconceptions here and how to surface them in class.",
+    assessment:"Suggest assessment ideas aligned to these objectives.",
+    local:"Suggest the kinds of Caribbean cases, data sources and community voices that would ground this topic. Name categories and where to look rather than specific figures you cannot verify.",
+    large:"Rework this session so it works in a large room with fixed seats where students cannot move.",
+    inclusion:"Suggest access, language and inclusion adjustments for this session, including for students who commute, work, or are reading in a second dialect or language."
+  };
+  const prompt = [
+    asks[$("coachAsk").value],
+    "",
+    contextBlock(w),
+    "",
+    "Week " + w.no + " topic: " + (w.topic||"not set"),
+    "Essential question: " + (w.question||"not set"),
+    "Objectives:\n" + (w.objectives||"none listed"),
+    "Readings:\n" + (w.readings||"none listed"),
+    "Already planned:\n" + w.sequence.map(a=>"- "+a.min+" min "+a.title+" ("+(MODES[a.mode]||{}).label+", "+(GROUPS[a.group]||"")+")").join("\n"),
+    w.personal.local ? "Local examples already in play: " + w.personal.local : "",
+    $("coachContext").value ? ("Lecturer notes: " + $("coachContext").value) : "",
+    "",
+    CARIB_RULE
+  ].filter(Boolean).join("\n");
+  try {
+    const out = await callClaude(COACH_SYSTEM, prompt, 1200);
+    $("coachOut").value = out.trim();
+    st.textContent = "Take what is useful. Nothing is added to your plan until you say so.";
+  } catch(e){
+    st.className = "status bad";
+    st.textContent = e.message + ". If this site is hosted without a server, paste an API key in Settings. Everything else in the planner keeps working without one.";
+  }
+  fill.style.width = "100%";
+  $("btnCoachRun").disabled = false;
+}
+
+/* ============================================================
+   Export
+   ============================================================ */
+function download(name, text, type){
+  const blob = new Blob([text], {type: type || "text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function slug(s){ return (s||"course").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "course"; }
+function scopedWeeks(scope){
+  if (scope === "week") return [week()];
+  if (scope === "ready") {
+    const r = state.weeks.filter(planned);
+    return r.length ? r : state.weeks;
+  }
+  return state.weeks;
+}
+const DOC_CSS =
+   'body{font-family:Georgia,"Times New Roman",serif;color:#12312C;max-width:820px;margin:36px auto;padding:0 24px;line-height:1.5}'
+ + 'h1{font-size:26px;margin:0 0 2px}h2{font-size:20px;margin:2px 0 8px}h3{font-size:17px;margin:22px 0 4px}'
+ + 'h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#63756F;margin:16px 0 4px;font-family:Arial,sans-serif}'
+ + '.sub{font-family:Arial,sans-serif;font-size:12px;color:#63756F;letter-spacing:.06em;text-transform:uppercase}'
+ + '.eyebrow{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#1C6B5B;font-weight:bold}'
+ + '.wk{border-top:2px solid #1C6B5B;padding-top:14px;margin-top:26px}'
+ + '.eq{background:#E5EFEA;padding:9px 12px;border-radius:6px;font-size:15px}'
+ + 'ul{margin:4px 0 0 18px;padding:0}li{margin:3px 0}p{margin:4px 0}'
+ + 'table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;margin-top:5px}'
+ + 'th{background:#12312C;color:#fff;text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em}'
+ + 'td{border-bottom:1px solid #D9E2DC;padding:6px 8px;vertical-align:top}'
+ + 'td.min{width:44px;color:#1C6B5B;font-weight:bold}td.mode{width:66px;color:#63756F}td.grp{width:78px;color:#63756F}'
+ + '.tot{float:right;font-weight:normal;color:#1C6B5B}'
+ + '.mine{background:#FBF1DF;border-left:4px solid #A96A12;padding:8px 14px;margin-top:14px}'
+ + '.mine h4{color:#A96A12}'
+ + '.q{background:#F1F4EF;border-left:4px solid #134A3F;padding:8px 14px;margin-top:14px;font-family:Arial,sans-serif;font-size:12.5px}'
+ + '.q h4{color:#134A3F}.q .bad{color:#A2402C}.q .warn{color:#A96A12}.q .ok{color:#1C6B5B}'
+ + '.note{background:#E3EEF3;border-left:4px solid #2C6E8F;padding:8px 14px;font-size:12.5px;font-family:Arial,sans-serif;margin:12px 0}'
+ + '@media print{body{margin:0}.wk{page-break-before:always}.wk:first-of-type{page-break-before:avoid}}';
+
+function courseHeaderBits(){
+  const c = state.course;
+  return [c.code, c.term, c.level, c.institution, c.country].filter(Boolean).join(" &middot; ");
+}
+function planDocument(weeks, withPersonal, withQuality){
+  const c = state.course;
+  const list = v => lines(v).map(l=>"<li>"+esc(l)+"</li>").join("");
+  const block = (title, v) => (v && v.trim()) ? '<h4>'+title+'</h4><ul>'+list(v)+'</ul>' : "";
+  const para = (title, v) => (v && v.trim()) ? '<h4>'+title+'</h4><p>'+esc(v).replace(/\n/g,"<br>")+'</p>' : "";
+
+  const body = weeks.map(w=>{
+    const t = timeProfile(w);
+    const rows = w.sequence.map(a=>
+      '<tr><td class="min">'+(a.min||0)+'</td><td><strong>'+esc(a.title)+'</strong>'
+      + (a.evidence ? '<br><span style="font-size:11.5px;color:#134A3F">Evidence: '+esc(a.evidence)+'</span>' : "")
+      + '</td>'
+      + '<td class="mode">'+esc((MODES[a.mode]||{}).label||"")+'</td>'
+      + '<td class="grp">'+esc(GROUPS[a.group]||"")+'</td>'
+      + '<td>'+esc(a.notes||"").replace(/\n/g,"<br>")+'</td></tr>').join("");
+    const p = w.personal, af = w.after, rm = w.room||{};
+    const hasP = p.hook||p.local||p.adapt||p.materials||p.notes;
+    const hasA = af.notes||af.evidence||af.reflect||af.bridge;
+    const hasR = rm.seats||rm.room||rm.groups||rm.fallback;
+    let qual = "";
+    if (withQuality && (w.topic||"").trim()) {
+      const a = analyse(w);
+      const items = a.checks.filter(x=>x.level!=="ok")
+        .map(x=>'<li class="'+x.level+'"><strong>'+esc(x.title)+'</strong>'+(x.detail?' &mdash; '+esc(x.detail):'')+'</li>').join("");
+      qual = '<div class="q"><h4>Quality check &mdash; '+a.score+'% ('+a.verdict+')</h4>'
+        + '<p>Students working '+Math.round(a.time.workPct)+'% of the session, transmission '+Math.round(a.time.listenPct)+'%, '
+        + a.evidencePoints+' evidence point'+(a.evidencePoints===1?"":"s")+', '
+        + (a.alignment.objs.length - a.alignment.orphans.length)+' of '+a.alignment.objs.length+' objectives practised in the room.</p>'
+        + (items ? '<ul>'+items+'</ul>' : '<p class="ok">Nothing outstanding.</p>') + '</div>';
+    }
+    return '<section class="wk">'
+      + '<div class="eyebrow">Week '+pad(w.no)+'</div>'
+      + '<h2>'+esc(w.topic||"Not yet planned")+'</h2>'
+      + (w.question ? '<p class="eq"><strong>Essential question:</strong> '+esc(w.question)+'</p>' : "")
+      + block("Learning objectives", w.objectives)
+      + block("Readings and resources", w.readings)
+      + block("Assessment", w.assessment)
+      + para("Watch for", w.concepts)
+      + '<h4>Class plan <span class="tot">'+t.total+' minutes &middot; '+(t.total?Math.round(t.workPct):0)+'% students working</span></h4>'
+      + '<table><thead><tr><th>Min</th><th>Move and evidence</th><th>Type</th><th>Grouping</th><th>Detail</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      + para("Exit ticket", w.exit)
+      + (hasR ? '<h4>Room and fallback</h4><p>'
+          + [rm.seats?("Students expected: "+esc(rm.seats)):"", rm.room?("Room: "+esc(ROOMS[rm.room]||rm.room)):"",
+             rm.groups?("Groups: "+esc(rm.groups)):""].filter(Boolean).join("<br>")
+          + (rm.fallback?"<br><em>If the technology fails:</em> "+esc(rm.fallback):"") + '</p>' : "")
+      + qual
+      + (withPersonal && hasP ? '<div class="mine"><h4>My layer</h4>'
+          + para("Hook", p.hook) + para("Local and regional examples", p.local)
+          + para("Adjustments", p.adapt) + para("Materials", p.materials) + para("Notes", p.notes)
+          + '</div>' : "")
+      + (withPersonal && hasA ? '<div class="mine"><h4>After class</h4>'
+          + para("What happened", af.notes) + para("Evidence collected", af.evidence)
+          + para("Reflection", af.reflect) + para("Bridge to next week", af.bridge)
+          + '</div>' : "")
+      + '</section>';
+  }).join("");
+
+  const bits = courseHeaderBits();
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>'+esc(c.title||"Course plan")+'</title><style>'+DOC_CSS+'</style></head><body>'
+    + '<h1>'+esc(c.title||"Course plan")+'</h1>'
+    + (bits ? '<div class="sub">'+bits+'</div>' : "")
+    + '<div class="sub">'+weeks.length+' week'+(weeks.length===1?"":"s")+' &middot; face to face &middot; '
+      + (c.minutes||90)+' minutes &middot; about '+(c.size||35)+' students &middot; prepared '+new Date().toLocaleDateString()+'</div>'
+    + body + '</body></html>';
+}
+function currentPlanDoc(){
+  return planDocument(scopedWeeks($("expScope").value), $("expPersonal").checked, $("expQuality").checked);
+}
+
+/* ---------- the quality assurance dossier ---------- */
+const QA_AREAS = [
+  {t:"Programme and course learning outcomes",
+   ask:"Are the intended learning outcomes stated, at an appropriate level, and demonstrably linked to the programme's outcomes?",
+   ev: () => {
+     const all = state.weeks.flatMap(w=>bloomsIn(w.objectives).map(b=>({w, ...b})));
+     const higher = all.filter(x=>x.bloom && x.bloom.rank>=3).length;
+     const plos = lines(state.course.plos);
+     return '<p>'+all.length+' course-level objectives are stated across '+state.weeks.length+' weeks. '
+       + (all.length ? Math.round(higher/all.length*100)+'% sit at apply level or above on the revised Bloom taxonomy. ' : '')
+       + (all.filter(x=>!x.bloom).length ? all.filter(x=>!x.bloom).length + ' do not open with an observable action verb and should be rewritten before submission.' : 'Every objective opens with an observable action verb.')
+       + '</p>'
+       + (plos.length ? '<h4>Programme outcomes this course serves</h4><ul>'+plos.map(p=>'<li>'+esc(p)+'</li>').join("")+'</ul>'
+                      : '<p><em>No programme learning outcomes recorded. Add them in Settings so this section can show the mapping a panel will ask for.</em></p>');
+   }},
+  {t:"Curriculum content, structure and progression",
+   ask:"Does the content cover the field appropriately, and does difficulty build across the term rather than repeating?",
+   ev: () => {
+     const rows = state.weeks.map(w=>{
+       const top = bloomsIn(w.objectives).map(b=>b.bloom).filter(Boolean).sort((a,b)=>b.rank-a.rank)[0];
+       return '<tr><td class="min">'+pad(w.no)+'</td><td>'+esc(w.topic||"—")+'</td><td class="mode">'+(top?top.label:"—")+'</td>'
+         + '<td>'+esc(lines(w.readings).length + " reading" + (lines(w.readings).length===1?"":"s"))+'</td></tr>';
+     }).join("");
+     return '<table><thead><tr><th>Week</th><th>Topic</th><th>Highest level</th><th>Resources</th></tr></thead><tbody>'+rows+'</tbody></table>';
+   }},
+  {t:"Teaching and learning strategies",
+   ask:"What evidence is there that teaching is active and student-centred rather than transmission only?",
+   ev: () => {
+     const ps = state.weeks.map(timeProfile);
+     const tot = ps.reduce((s,p)=>s+p.total,0), work = ps.reduce((s,p)=>s+p.work,0), listen = ps.reduce((s,p)=>s+p.listen,0);
+     const moves = {};
+     state.weeks.forEach(w=>(w.sequence||[]).forEach(a=>{ if ((a.title||"").trim()) moves[a.title.trim()] = (moves[a.title.trim()]||0)+1; }));
+     const top = Object.entries(moves).sort((a,b)=>b[1]-a[1]).slice(0,12);
+     return '<p>Across the planned term, '+tot+' minutes of scheduled contact time are broken down as '
+       + work+' minutes of students working ('+(tot?Math.round(work/tot*100):0)+'%), '
+       + listen+' minutes of transmission ('+(tot?Math.round(listen/tot*100):0)+'%), and the remainder in opening and closing.</p>'
+       + (top.length ? '<h4>Teaching methods used, by frequency</h4><ul>'+top.map(([k,v])=>'<li>'+esc(k)+' &mdash; '+v+' week'+(v===1?"":"s")+'</li>').join("")+'</ul>' : '');
+   }},
+  {t:"Assessment and feedback",
+   ask:"Is assessment aligned to the outcomes, spread sensibly across the term, and rehearsed before it counts?",
+   ev: () => {
+     const rows = state.weeks.filter(w=>lines(w.assessment).length).map(w=>
+       '<tr><td class="min">'+pad(w.no)+'</td><td>'+esc(lines(w.assessment).join("; "))+'</td>'
+       + '<td>'+esc((w.exit||"").slice(0,90) || "—")+'</td></tr>').join("");
+     const load = state.weeks.map(w=>lines(w.assessment).length);
+     const pile = load.map((n,i)=>({n,i})).filter(x=>x.n>=3).map(x=>"week "+(x.i+1));
+     return (rows ? '<table><thead><tr><th>Week</th><th>Assessment in play</th><th>In-class check</th></tr></thead><tbody>'+rows+'</tbody></table>'
+                  : '<p><em>No assessment items recorded against weeks.</em></p>')
+       + (pile.length ? '<p><strong>Load note:</strong> three or more items fall in '+pile.join(", ")+'.</p>' : '');
+   }},
+  {t:"Student support, access and inclusion",
+   ask:"What reasonable adjustments and supports are planned, and are they recorded rather than improvised?",
+   ev: () => {
+     const rows = state.weeks.filter(w=>(w.personal.adapt||"").trim()).map(w=>
+       '<tr><td class="min">'+pad(w.no)+'</td><td>'+esc(w.personal.adapt)+'</td></tr>').join("");
+     const n = state.weeks.filter(w=>(w.personal.adapt||"").trim()).length;
+     return '<p>Adjustments are recorded for '+n+' of '+state.weeks.length+' weeks.</p>'
+       + (rows ? '<table><thead><tr><th>Week</th><th>Adjustments planned</th></tr></thead><tbody>'+rows+'</tbody></table>' : '');
+   }},
+  {t:"Learning resources and the teaching environment",
+   ask:"Are the resources appropriate and available, and has the teaching been planned for the room and infrastructure that actually exist?",
+   ev: () => {
+     const c = state.course;
+     const fb = state.weeks.filter(w=>(w.room&&w.room.fallback||"").trim()).length;
+     const reads = state.weeks.reduce((s,w)=>s+lines(w.readings).length,0);
+     return '<p>Delivery is face to face in a '+(ROOMS[c.room]||c.room).toLowerCase()+', about '+(c.size||35)+' students, '
+       + (c.minutes||90)+' minutes per session. Technology available: '+(TECHS[c.tech]||"not recorded").toLowerCase()+'.</p>'
+       + '<p>'+reads+' resources are listed across the term. A documented low-technology fallback exists for '+fb+' of '+state.weeks.length+' weeks.</p>';
+   }},
+  {t:"Monitoring, review and enhancement",
+   ask:"How is the course reviewed, and what has been changed as a result?",
+   ev: () => {
+     const rows = state.weeks.filter(w=>(w.after.reflect||"").trim() || (w.after.notes||"").trim()).map(w=>
+       '<tr><td class="min">'+pad(w.no)+'</td><td>'+esc(w.after.reflect || w.after.notes)+'</td>'
+       + '<td>'+esc(w.after.evidence||"—")+'</td></tr>').join("");
+     const n = state.weeks.filter(w=>(w.after.reflect||"").trim()).length;
+     return '<p>Post-session reflection is recorded for '+n+' of '+state.weeks.length+' weeks, with the evidence of learning collected alongside it.</p>'
+       + (rows ? '<table><thead><tr><th>Week</th><th>Reflection</th><th>Evidence collected</th></tr></thead><tbody>'+rows+'</tbody></table>'
+               : '<p><em>Nothing recorded yet. This is the section reviewers read most closely, and it is the cheapest one to fill: a sentence per week, on the day.</em></p>');
+   }}
+];
+function qaDocument(){
+  const c = state.course;
+  const scores = state.weeks.filter(w=>(w.topic||"").trim()).map(w=>analyse(w).score);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  const body = QA_AREAS.map((a,i)=>
+    '<section><h3>'+(i+1)+'. '+esc(a.t)+'</h3>'
+    + '<p class="sub" style="text-transform:none;letter-spacing:0;font-size:13px"><em>'+esc(a.ask)+'</em></p>'
+    + a.ev() + '</section>').join("");
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Quality dossier &mdash; '+esc(c.title||"Course")+'</title><style>'+DOC_CSS+'</style></head><body>'
+    + '<h1>Course quality dossier</h1>'
+    + '<h2>'+esc(c.title||"Untitled course")+'</h2>'
+    + '<div class="sub">'+courseHeaderBits()+'</div>'
+    + '<div class="sub">Prepared '+new Date().toLocaleDateString()
+      + (c.qa ? ' &middot; for ' + esc(QA_BODIES[c.qa]||c.qa) : '') + '</div>'
+    + '<div class="note"><strong>How to read this.</strong> The headings below are the quality areas that Caribbean accreditation and internal review panels ask about in some form &mdash; UCJ, ACTT, BAC, the national councils, and institutional self-studies all cover this ground under their own numbering. '
+    + 'Check the current handbook of your own body for their exact wording and order, then move this evidence under it. Everything here is generated from your own weekly plans; nothing has been added.</div>'
+    + '<p><strong>Summary.</strong> '+plural(state.weeks.length,'week')+' planned, average teaching quality score '+avg+'% on the internal active-learning and alignment check, '
+    + state.weeks.filter(planned).length+' with a complete session plan.</p>'
+    + body + '</body></html>';
+}
+
+/* ---------- the outcome map, for spreadsheets ---------- */
+function toCSV(weeks){
+  const q = s => '"' + String(s==null?"":s).replace(/"/g,'""').replace(/\r?\n/g,"; ") + '"';
+  const head = ["Week","Topic","Essential question","Objective","Bloom level","Teaching moves","Evidence collected","Exit ticket","Assessment","Readings","Minutes","Students working %","Quality score"];
+  const rows = [head.map(q).join(",")];
+  weeks.forEach(w=>{
+    const t = timeProfile(w);
+    const a = (w.topic||"").trim() ? analyse(w) : null;
+    const moves = (w.sequence||[]).map(x=>x.min+"m "+x.title).join("; ");
+    const ev = (w.sequence||[]).map(x=>x.evidence).filter(Boolean).join("; ");
+    const objs = bloomsIn(w.objectives);
+    const base = [w.no, w.topic, w.question];
+    const tail = [moves, ev, w.exit, lines(w.assessment).join("; "), lines(w.readings).join("; "),
+                  t.total, Math.round(t.workPct), a ? a.score : ""];
+    if (!objs.length) rows.push([...base, "", ""].concat(tail).map(q).join(","));
+    else objs.forEach(o=>rows.push([...base, o.line, o.bloom ? o.bloom.label : "no action verb"].concat(tail).map(q).join(",")));
+  });
+  return rows.join("\r\n");
+}
+function toMarkdown(weeks, withPersonal){
+  const c = state.course;
+  const list = weeks || state.weeks;
+  const keepMine = withPersonal !== false;
+  let out = "# " + (c.title||"Course") + "\n";
+  const bits = [c.code,c.term,c.level,c.institution,c.country].filter(Boolean).join(" · ");
+  if (bits) out += "_" + bits + "_\n";
+  out += "\nFace to face · " + (c.minutes||90) + " minute sessions · about " + (c.size||35) + " students · " + (ROOMS[c.room]||"") + "\n";
+  list.forEach(w=>{
+    const t = timeProfile(w);
+    out += "\n\n## Week " + pad(w.no) + (w.topic ? " — " + w.topic : "") + "\n";
+    if (w.question) out += "\n**Essential question:** " + w.question + "\n";
+    const bl = (title,v)=> v && v.trim() ? "\n**"+title+"**\n" + lines(v).map(l=>"- "+l).join("\n") + "\n" : "";
+    out += bl("Objectives", w.objectives);
+    out += bl("Readings", w.readings);
+    out += bl("Assessment", w.assessment);
+    if (w.concepts) out += "\n**Watch for:** " + w.concepts + "\n";
+    out += "\n**Class plan** — " + t.total + " minutes, " + (t.total?Math.round(t.workPct):0) + "% students working\n\n";
+    out += "| Min | Move | Type | Grouping | Evidence | Notes |\n|---|---|---|---|---|---|\n";
+    w.sequence.forEach(a=>{
+      const cell = s => String(s||"").replace(/\n/g,"<br>").replace(/\|/g,"/");
+      out += "| " + (a.min||0) + " | " + cell(a.title) + " | " + ((MODES[a.mode]||{}).label||"") + " | "
+           + (GROUPS[a.group]||"") + " | " + cell(a.evidence) + " | " + cell(a.notes) + " |\n";
+    });
+    if (w.exit) out += "\n**Exit ticket:** " + w.exit + "\n";
+    const rm = w.room||{};
+    if (rm.groups || rm.fallback || rm.seats || rm.room) {
+      out += "\n**Room**\n";
+      if (rm.seats) out += "- Students expected: " + rm.seats + "\n";
+      if (rm.room) out += "- Room: " + (ROOMS[rm.room]||rm.room) + "\n";
+      if (rm.groups) out += "- Groups: " + rm.groups + "\n";
+      if (rm.fallback) out += "- If the technology fails: " + rm.fallback + "\n";
+    }
+    const p = w.personal;
+    if (keepMine && (p.hook||p.local||p.adapt||p.materials||p.notes)) {
+      out += "\n**My layer**\n";
+      if (p.hook) out += "- Hook: " + p.hook + "\n";
+      if (p.local) out += "- Local examples: " + p.local + "\n";
+      if (p.adapt) out += "- Adjustments: " + p.adapt + "\n";
+      if (p.materials) out += "- Materials: " + p.materials + "\n";
+      if (p.notes) out += "- Notes: " + p.notes + "\n";
+    }
+    const a2 = w.after;
+    if (keepMine && (a2.notes||a2.evidence||a2.reflect||a2.bridge)) {
+      out += "\n**After class**\n";
+      if (a2.notes) out += "- What happened: " + a2.notes + "\n";
+      if (a2.evidence) out += "- Evidence collected: " + a2.evidence + "\n";
+      if (a2.reflect) out += "- Reflection: " + a2.reflect + "\n";
+      if (a2.bridge) out += "- Bridge: " + a2.bridge + "\n";
+    }
+  });
+  return out;
+}
+function openPrintable(html){
+  const w = window.open("", "_blank");
+  if (!w) return false;
+  w.document.write(html);
+  w.document.close(); w.focus();
+  setTimeout(()=>w.print(), 400);
+  return true;
+}
+
+/* ============================================================
+   Wiring
+   ============================================================ */
+function openScrim(id){ closeAll(); $(id).classList.add("open"); }
+function closeAll(){ document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("open")); }
+
+function fillSelects(){
+  $("sCountry").innerHTML = COUNTRIES.map(c=>'<option value="'+esc(c)+'">'+esc(c||"Not set")+'</option>').join("");
+  $("sQA").innerHTML = Object.keys(QA_BODIES).map(k=>'<option value="'+k+'">'+esc(QA_BODIES[k])+'</option>').join("");
+  $("qhelpBody").innerHTML = QHELP.map(([t,d])=>'<h4 style="font-family:var(--util);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:14px 0 3px">'+esc(t)+'</h4><p class="hint" style="margin:0">'+esc(d)+'</p>').join("")
+    + '<div class="note">None of this leaves your machine. The check is arithmetic and word matching, not AI, so it runs instantly, works with no internet, and gives the same answer every time.</div>';
+}
+
+function wire(){
+  FIELDS.concat(RFIELDS, PFIELDS, AFIELDS).forEach(([id])=>{
+    $(id).oninput = onEdit;
+    if ($(id).tagName === "SELECT") $(id).onchange = onEdit;
+  });
+  $("courseTitle").oninput = onEdit;
+
+  $("btnAddAct").onclick = ()=>{
+    readForm();
+    week().sequence.push({min:15, title:"New move", mode:"active", group:"pairs", notes:"", evidence:"", tech:false});
+    paintActivities(); onEdit();
+  };
+  $("btnBalance").onclick = rebalance;
+  $("btnLibrary").onclick = ()=>{ readForm(); if (!Object.keys(libOn).length) libOn = {fits:true}; paintLibrary(); openScrim("libScrim"); };
+  $("libSearch").oninput = paintLibrary;
+
+  $("btnAddWeek").onclick = ()=>{
+    readForm();
+    state.weeks.push(blankWeek(state.weeks.length+1, state.course.minutes));
+    state.selected = state.weeks.length;
+    paintWeek(); queueSave();
+  };
+  $("btnPrintWeek").onclick = ()=>{ readForm(); window.print(); };
+  $("btnPrintAll").onclick = ()=>{
+    readForm();
+    if (!openPrintable(planDocument(state.weeks, true, true))) toast("Allow pop-ups, or use Export to save the plan");
+  };
+
+  /* dashboard and method */
+  $("btnDash").onclick = ()=>{ readForm(); paintDash(); openScrim("dashScrim"); };
+  $("btnDashPrint").onclick = ()=>{ if (!openPrintable(qaDocument())) toast("Allow pop-ups to print"); };
+  $("btnQualityHelp").onclick = ()=> openScrim("qhelpScrim");
+
+  /* import */
+  $("btnImport").onclick = ()=>{ staged=null; rawText=""; $("preview").style.display="none"; $("importStatus").textContent=""; $("btnApply").disabled=true; openScrim("importScrim"); };
+  $("btnPick").onclick = ()=> $("file").click();
+  const takeFile = async f => {
+    if (!f) return;
+    $("fileName").textContent = "Reading " + f.name + "…";
+    try { rawText = await extractText(f); $("fileName").textContent = f.name + " · " + rawText.length.toLocaleString() + " characters"; }
+    catch(err){ $("fileName").textContent = err.message; }
+  };
+  $("file").onchange = e => takeFile(e.target.files[0]);
+  const drop = $("drop");
+  ["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add("hot"); }));
+  ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove("hot"); }));
+  drop.addEventListener("drop", e=> takeFile(e.dataTransfer.files[0]));
+  $("btnRead").onclick = readOutline;
+  $("btnApply").onclick = applyImport;
+
+  /* coach */
+  $("btnCoach").onclick = ()=>{ readForm(); $("coachTitle").textContent = "Ideas for week " + pad(week().no); openScrim("coachScrim"); };
+  $("btnCoachRun").onclick = runCoach;
+  $("btnCoachCopyPersonal").onclick = ()=>{
+    const txt = $("coachOut").value.trim();
+    if (!txt) { toast("Nothing to send yet"); return; }
+    readForm();
+    const w = week();
+    w.personal.notes = (w.personal.notes ? w.personal.notes + "\n\n" : "") + txt;
+    paintWeek(); save(); closeAll(); toast("Added to your layer");
+  };
+
+  /* courses */
+  $("btnCourses").onclick = ()=>{ readForm(); paintCourseList(); openScrim("coursesScrim"); };
+  $("coursePicker").onchange = async e=>{
+    const v = e.target.value;
+    if (v === "__new") { paintPicker(); paintCourseList(); openScrim("coursesScrim"); $("newCourseName").focus(); return; }
+    await switchCourse(v);
+  };
+  $("btnNewCourse").onclick = ()=>{
+    const name = $("newCourseName").value.trim();
+    if (!name) { toast("Give the course a title first"); return; }
+    createCourse(name, parseInt($("newCourseWeeks").value,10) || 13);
+    $("newCourseName").value = "";
+  };
+  $("btnDuplicate").onclick = duplicateCourse;
+
+  /* draft a week */
+  $("btnPlanWeek").onclick = ()=>{
+    readForm();
+    $("planEyebrow").textContent = "Week " + pad(week().no);
+    $("planTitle").textContent = week().topic ? "Draft: " + week().topic : "Draft this week";
+    $("planPreview").style.display = "none"; $("planStatus").textContent = "";
+    $("btnPlanApply").disabled = true; draft = null;
+    if (roomFor(week()) === "tiered" && $("planStyle").value === "active") $("planStyle").value = "lecturehall";
+    if (state.course.tech === "none") $("planLowTech").checked = true;
+    openScrim("planScrim");
+  };
+  $("btnPlanRun").onclick = async ()=>{
+    readForm();
+    const st = $("planStatus"), bar = $("planBar"), fill = bar.querySelector("i");
+    if (!week().topic.trim()) { st.className = "status bad"; st.textContent = "Give the week a topic first, or import an outline."; return; }
+    st.className = "status"; st.textContent = "Drafting…";
+    bar.classList.add("on"); fill.style.width = "45%";
+    $("btnPlanRun").disabled = true;
+    try {
+      draft = await draftWeek(week(), $("planContext").value, $("planStyle").value,
+                              {local: $("planLocal").checked, lowTech: $("planLowTech").checked});
+      paintDraft(draft);
+      st.textContent = "Draft ready. Untick anything you do not want before applying.";
+      $("btnPlanApply").disabled = false;
+    } catch(e){
+      st.className = "status bad";
+      st.textContent = e.message + ". If this site is hosted without a server, paste an API key in Settings. Either way you can plan the week by hand — the move library and the quality check need no internet at all.";
+    }
+    fill.style.width = "100%";
+    $("btnPlanRun").disabled = false;
+  };
+  $("btnPlanApply").onclick = ()=>{ if (draft) applyDraft(draft); };
+  $("btnPlanAllEmpty").onclick = draftAllEmpty;
+
+  /* export */
+  $("btnWeekDownload").onclick = ()=>{
+    readForm();
+    $("exportTitle").textContent = "Download week " + pad(week().no);
+    $("expScope").value = "week";
+    openScrim("exportScrim");
+  };
+  $("btnExport").onclick = ()=>{
+    readForm();
+    $("exportTitle").textContent = "Download " + (state.course.title || "your plan");
+    openScrim("exportScrim");
+  };
+  $("btnEachWeek").onclick = async ()=>{
+    readForm();
+    const ws = scopedWeeks($("expScope").value === "week" ? "all" : $("expScope").value);
+    const mine = $("expPersonal").checked, q = $("expQuality").checked;
+    for (const w of ws) {
+      download(slug(state.course.title) + "-week-" + pad(w.no) + ".doc", planDocument([w], mine, q), "application/msword");
+      await new Promise(r=>setTimeout(r, 400));
+    }
+    toast(plural(ws.length, "weekly plan") + " downloaded. Allow multiple downloads if your browser asks.");
+  };
+  const base = ()=> slug(state.course.title) + ($("expScope").value==="week" ? "-week-"+pad(week().no) : "");
+  $("btnDocx").onclick = ()=> download(base()+".doc", currentPlanDoc(), "application/msword");
+  $("btnPdf").onclick = ()=>{
+    const doc = currentPlanDoc();
+    download(base()+".html", doc, "text/html");
+    if (!openPrintable(doc)) toast("Downloaded. Allow pop-ups if you also want the print dialogue.");
+  };
+  $("btnMd").onclick = ()=> download(base()+".md", toMarkdown(scopedWeeks($("expScope").value), $("expPersonal").checked), "text/markdown");
+  $("btnCsv").onclick = ()=> download(slug(state.course.title)+"-outcome-map.csv", "﻿" + toCSV(scopedWeeks($("expScope").value)), "text/csv");
+  $("btnQA").onclick = ()=>{
+    readForm();
+    download(slug(state.course.title)+"-quality-dossier.doc", qaDocument(), "application/msword");
+    toast("Dossier downloaded. It opens in Word so you can move the evidence under your own body's headings.");
+  };
+  $("btnJson").onclick = ()=> download(slug(state.course.title)+"-activecourse.json", JSON.stringify(state,null,2), "application/json");
+  $("btnJsonAll").onclick = async ()=>{
+    readForm(); await save();
+    const all = [];
+    for (const c of library.courses) {
+      const raw = await store.get(cKey(c.id));
+      if (raw) { try { all.push(JSON.parse(raw)); } catch(e){} }
+    }
+    download("activecourse-all-courses.json", JSON.stringify({activecourse:"library", courses:all}, null, 2), "application/json");
+  };
+  $("restoreFile").onchange = async e=>{
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      const docs = Array.isArray(d.courses) && d.activecourse === "library" ? d.courses : [d];
+      readForm(); await save();
+      let n = 0;
+      for (const doc of docs) {
+        if (!doc || !Array.isArray(doc.weeks)) continue;
+        state = hydrate(doc);
+        state.id = newId();
+        await save();
+        n++;
+      }
+      if (!n) throw new Error("bad file");
+      paintCourse(); paintWeek(); paintCourseList();
+      toast(n === 1 ? "Course added" : n + " courses added");
+    } catch(err){ toast("That file is not an ActiveCourse backup"); }
+    e.target.value = "";
+  };
+
+  /* settings */
+  $("btnSettings").onclick = ()=>{
+    const c = state.course;
+    $("sCode").value = c.code||""; $("sTerm").value = c.term||"";
+    $("sLevel").value = c.level||""; $("sInstitution").value = c.institution||"";
+    $("sCountry").value = c.country||""; $("sQA").value = c.qa||"";
+    $("sMinutes").value = c.minutes||90; $("sSize").value = c.size||35;
+    $("sRoom").value = c.room||"flat"; $("sTech").value = c.tech||"patchy";
+    $("sPLO").value = c.plos||"";
+    $("sKey").value = library.settings.apiKey||"";
+    openScrim("settingsScrim");
+  };
+  const SETTING_IDS = ["sCode","sTerm","sLevel","sInstitution","sCountry","sQA","sMinutes","sSize","sRoom","sTech","sPLO","sKey"];
+  const readSettings = ()=>{
+    const c = state.course;
+    c.code = $("sCode").value; c.term = $("sTerm").value; c.level = $("sLevel").value;
+    c.institution = $("sInstitution").value; c.country = $("sCountry").value; c.qa = $("sQA").value;
+    c.minutes = clamp(parseInt($("sMinutes").value,10) || 90, 20, 300);
+    c.size = clamp(parseInt($("sSize").value,10) || 35, 1, 2000);
+    c.room = $("sRoom").value; c.tech = $("sTech").value; c.plos = $("sPLO").value;
+    library.settings.apiKey = $("sKey").value.trim();
+    paintCourse(); paintRibbon(); paintQuality(); paintRail(); queueSave();
+  };
+  SETTING_IDS.forEach(id=>{ $(id).oninput = readSettings; $(id).onchange = readSettings; });
+
+  $("btnWipe").onclick = async ()=>{
+    if (!confirm("Clear every week in " + (state.course.title||"this course") + "? Your other courses are not touched. Download a backup first if you want to keep it.")) return;
+    const keep = Object.assign({}, state.course);
+    const n = state.weeks.length;
+    const id = state.id;
+    state = freshState(keep.title, n);
+    state.id = id; state.course = keep;
+    state.weeks = Array.from({length:n},(_,i)=>blankWeek(i+1, keep.minutes));
+    await save();
+    paintCourse(); paintWeek(); closeAll(); toast("Weeks cleared");
+  };
+
+  /* scrim close and shortcuts */
+  document.querySelectorAll("[data-close]").forEach(b=>b.onclick = closeAll);
+  document.querySelectorAll(".scrim").forEach(s=>s.addEventListener("click", e=>{ if (e.target===s) closeAll(); }));
+  document.addEventListener("keydown", e=>{
+    if (e.key === "Escape") return closeAll();
+    if ((e.altKey || e.metaKey) && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      e.preventDefault();
+      selectWeek(state.selected + (e.key === "ArrowRight" ? 1 : -1));
+    }
+  });
+  window.addEventListener("beforeunload", ()=>{ readForm(); });
+}
+
+(async function start(){
+  await load();
+  fillSelects();
+  wire();
+  paintCourse();
+  paintWeek();
+  $("savedFlag").textContent = "Saved";
+})();
+</script>
+</body>
+</html>
